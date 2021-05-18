@@ -1,5 +1,3 @@
-// import fileReader from './file-reader'
-// import timezones from '../timezones.json';
 
 (() => {
 
@@ -24,90 +22,192 @@ var _timezones = []
 function timezonifyReceiver(request, sender, sendResponse){
     const {timezones} = request;
     _timezones = timezones
-    timezonify();
+    // timezonify();
 }
 
-function timezonify() {
-    const textContent = document.getSelection().toString();
-    // const timezoneRegex = /(?<!\S)((1[0-2]|0?[0-9]):?([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\ *([A-Z]{2,4})(?!\S)/gm;
-    const timezoneRegex = /(?<!\S)((1[0-2]|0?[0-9]):?([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\ *([A-Z]{2,4})/gm
-    
-    const matches = textContent.match(timezoneRegex); 
-    // debugger
-    const clientTimezone = getClientTimezone();
-    const clientTimezoneData = findTimezoneDataFromTimezoneUtc(clientTimezone);
-    
+var prevRange = null;
 
-    if (matches) {
-        for (let match of matches) {
-            const matchGroups = [...match.matchAll(timezoneRegex)][0];
-            const hour = matchGroups[2] ?? matchGroups[5];
-            const minute = matchGroups[3] ?? matchGroups[6];
-            const meridian = matchGroups[4];
-            const timezone = matchGroups[7];
-            const sourceTimezoneData = findTimezoneDataFromTimezone(timezone);
-            if (sourceTimezoneData) {
-                const {
-                    hour: targetHour,
-                    minute: targetMinute,
-                    meridian: targetMeridian
-                } = getOffsetTime(
-                    hour,
-                    minute,
-                    sourceTimezoneData.offset,
-                    clientTimezoneData.offset,
-                    meridian
-                );
-                const targetTimeString =
-                    targetHour +
-                    ":" +
-                    targetMinute +
-                    targetMeridian +
-                    " " +
-                    clientTimezoneData.abbr;
-                replaceSelectedText(match, targetTimeString)
-                    
-            }
-      }
-    }
+function removePopovers(){
+  const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
+  console.log(popovers)
+  for(let popover of popovers){
+      popover.remove();
+  }
+}
+
+function addPopover(range){
+    const rect = range.getBoundingClientRect()
+    const parentNode = getRangeParentNode(range);
+    prevRange = range
+    createTimezonifyPopover(parentNode, rect, range.toString())
+}
+
+
+document.onmouseup = async (e) => {
+  console.log(e.target)
+  if(e.target.classList.contains("timezonify-popover")) return;
+
+  const dataUrl = browser.runtime.getURL("/data/timezones.json");
+  _timezones = await(await fetch(dataUrl)).json()
+
+  const sel = document.getSelection();
+  const range = sel.getRangeAt(0)
+  var regex = /(?<!\S)((1[0-2]|0?[0-9]):([0-5]?[0-9]?)([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s?([A-Z]{2,4})/gm
+  // if(e.target.classList.contains("timezonify-popover")) return;
+  
+  const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
+  
+  if(prevRange !== null && !checkSameRange(prevRange, range)){  // user selected different text
+    removePopovers()
+    if(!sel.isCollapsed && popovers.length < 1) addPopover(range) // user didn't just click away
+  } else if(popovers.length < 1 && !sel.isCollapsed){
+    addPopover(range)
+  }
+}
+
+
+function checkSameRange(prevRange, newRange){
+  if(prevRange !== null && 
+    prevRange.startContainer.data === newRange.startContainer.data && 
+    prevRange.startOffset === newRange.startOffset && 
+    prevRange.endOffset === newRange.endOffset){
+    return true;
+  }
+  return false;
+}
+
+function getRangeParentNode(range){
+  const rangeNode = range.startContainer
+  if(rangeNode.nodeType == Node.TEXT_NODE){
+      return rangeNode.parentNode
+  }
+  return rangeNode.parentNode
+}
+
+
+function createTimezonifyPopover(parentNode, rect, text){
+  let button = document.createElement("button");
+  let textHeight = parseInt(window.getComputedStyle(parentNode).fontSize, 10)
+  button.style.top = (rect.top > rect.height ? rect.top - (textHeight) - 6 : rect.top + textHeight + 3) + window.scrollY + "px";
+  
+  // button.style.top = rect.top - rect.height / 2 + "px"
+  button.style.left = rect.left + window.scrollX + "px"
+  button.style.position = "absolute";
+  button.style.opacity = 0.7;
+  button.style.backgroundColor = "black";
+  button.style.color = "white";
+  button.style.border = "none"
+  button.style.borderRadius = 4 + "px"
+  button.style.cursor = "pointer"
+  button.style.padding = 4 + "px"
+  button.style.userSelect = "none"
+  button.style.zIndex = 9999;
+  // button.style.fontSize = document.body.fontSize + "px"
+
+  button.className = "timezonify-popover"
+  button.innerText = "Timezonify";
+  button.dataset.text = text;
+  // button.dataset.parentID = sharedID
+  button.onclick = (e) => {
+      const timezonified = timezonify(text);
+      if(!timezonified){
+          console.error("Not a valid time")
+          button.innerText = "Not a valid time"
+          setTimeout(() => {
+              e.target.parentNode.removeChild(e.target)
+          }, 1500)
+          return;
+      } 
+      button.classList.add("timezonify-time-popover")
+      button.style.top = rect.top + "px"
+      button.style.left = rect.left + "px"
+      button.style.opacity = 1;
+      button.innerText = timezonified;
   }
 
-  function replaceSelectedText(regex, replacement){
-    let sel, range, fragment;
-    sel = window.getSelection();
-    if(sel.getRangeAt && sel.rangeCount){
-        
-        const selText = sel.toString().replace(regex, replacement)
-        console.log(selText)
-        range = sel.getRangeAt(0)
-        range.deleteContents();
-        if(range.createContextualFragment){
-            fragment = range.createContextualFragment(selText)
-            console.log(fragment)
-        } else {
-            var div = document.createElement("div")
-            div.innerHTML = html;
-            fragment = document.createDocumentFragment();
-            while (child = div.firstChild) {
-                fragment.appendChild(child);
-            }
-        }
-        var firstInsertedNode = fragment.firstChild;
-        var lastInsertedNode = fragment.lastChild;
-        range.insertNode(fragment);
-        if (firstInsertedNode) {
-            range.setStartBefore(firstInsertedNode);
-            range.setEndAfter(lastInsertedNode);
-        }
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }
+  button.ondblclick = (e) => {
+    e.target.parentNode.removeChild(e.target)
   }
   
-  function getClientTimezone() {
+  // parentNode.style.position = "relative"
+  // parentNode.id = sharedID
+  document.body.append(button)
+}
+
+function createTimePopover(parentNode, rect, replacement){
+  let button = document.createElement("button");
+  button.style.top = rect.top > rect.height ? (rect.top - rect.height - 6 + "px") : (rect.top + rect.height + 3 + "px");
+  button.style.left = rect.left + "px"
+  
+  button.className = "timezonify-time-popover"
+  button.innerText = replacement;
+  // button.onclick = (e) => {
+  //     createTimePopover(parentNode, rect, timezonified)
+  // }
+  parentNode.style.position = "unset"
+  parentNode.append(button)
+}
+
+
+function timezonify(text){
+  var regex = /\s?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s+([A-Z]{2,4})/gm            
+  const replacement = replaceTime(text, regex)
+  return replacement
+}
+
+function replaceTime(text, regex){
+  const matches = text.match(regex)
+  if(matches){
+      for(let match of matches){
+          const convertedTime = convertTime(regex, match)
+          return convertedTime
+      }
+  }
+}
+
+function convertTime(regex, string){
+
+  const groups = regex.exec(string);
+  const hour = groups[2] ?? groups[5];
+  const minute = groups[3] ?? groups[6];
+  const meridian = groups[4];
+  const timezone = groups[7];
+  const sourceTimezoneData = findTimezoneDataFromTimezone(timezone);
+  const clientTimezoneData = getClientTimezoneData();
+  // console.log(clientTimezoneData)
+  if(sourceTimezoneData){
+      const {
+          hour: targetHour,
+          minute: targetMinute,
+          meridian: targetMeridian
+      } = getOffsetTime(
+          hour,
+          minute,
+          sourceTimezoneData.offset,
+          clientTimezoneData.offset,
+          meridian
+      );
+      const targetTimeString =
+          targetHour +
+          ":" +
+          targetMinute +
+          targetMeridian +
+          " " +
+          clientTimezoneData.abbr;
+      return targetTimeString   
+  } else {
+      console.error(`Exception: ${timezone} is not a timezone!`)
+      throw `Exception: ${timezone} is not a timezone!`
+  }
+          
+}
+
+  
+  function getClientTimezoneData() {
     // const offset = new Date().getTimezoneOffset() / 60;
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return timezone;
+    const utc = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timezoneData = findTimezoneDataFromTimezoneUtc(utc)
+    return timezoneData;
   }
   
   function findTimezoneDataFromTimezoneUtc(timezoneUtc) {

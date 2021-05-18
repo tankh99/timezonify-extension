@@ -1,0 +1,23 @@
+/* .timezonify-popover-container{
+    position: relative;
+} */
+
+.timezonify-popover{
+    opacity: 0.7;
+    background: black;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+    border: none;
+    border-radius: 4px;
+    position:absolute;
+    cursor:pointer;
+    user-select: none;
+}
+
+.timezonify-time-popover{
+    opacity: 1;
+    user-select: all;
+}

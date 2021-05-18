@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./timezonify.css"></link>
+    <title>Document</title>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            justify-content: center;
+            background-color: gainsboro;
+        }
+        .relative{
+            position: relative;
+            padding: 10px;
+            margin: 30px 20px;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    
+    <b>11:00pm GST</b>
+    <div id="target" class="text-dark-gray font-size-6">
+        <span>10:00AM</span>
+        <meta itemprop="startDate" content="2021-05-14 14:00:00 UTC">
+        <span> to </span>
+            <i>May 16, 2:00PM</i>
+        <meta itemprop="endDate" content="2021-05-16 18:00:00 UTC">
+      <b>IST</b>
+    </div>
+    <div class="relative">
+    <p id="test">
+        The <i>blue</i> bird <b>eats</b> up the <i>wriggly</i> worm
+    </p>
+    <p>
+        A <i>blue</i> bird is a red stone
+    </p>
+    <p>
+        Blue bird red stone
+    </p>
+    </div>
+    <!-- <script>
+
+        const _timezones = [
+            {
+                "value": "India Standard Time",
+                "abbr": "IST",
+                "offset": 5.5,
+                "isdst": false,
+                "text": "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi",
+                "utc": [
+                    "Asia/Kolkata"
+                ]
+            },
+            {
+            "value": "Singapore Standard Time",
+            "abbr": "MPST",
+            "offset": 8,
+            "isdst": false,
+            "text": "(UTC+08:00) Kuala Lumpur, Singapore",
+            "utc": [
+                "Asia/Brunei",
+                "Asia/Kuala_Lumpur",
+                "Asia/Kuching",
+                "Asia/Makassar",
+                "Asia/Manila",
+                "Asia/Singapore",
+                "Etc/GMT-8"
+            ]
+            },
+        ]
+        document.onmouseup = (e) => {
+            const sel = document.getSelection();
+            const range = sel.getRangeAt(0)
+            var regex = /(?<!\S)((1[0-2]|0?[0-9]):([0-5]?[0-9]?)([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s?([A-Z]{2,4})/gm
+            if(e.target.classList.contains("timezonify-popover")) return;
+            else if(sel.isCollapsed){ //isCollapsed is to check whether or not the user simply clicked out and not selecting something
+                const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
+                for(let popover of popovers){
+                    popover.remove();
+                }
+                return;
+            }
+            
+            const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
+            if(popovers.length < 1){
+                const rect = range.getBoundingClientRect()
+                const parentNode = getRangeParentNode(range);
+                createTimezonifyPopover(parentNode, rect, range.toString())
+            }
+    
+
+        }
+
+        function getRangeParentNode(range){
+            const rangeNode = range.startContainer
+            if(rangeNode.nodeType == Node.TEXT_NODE){
+                return rangeNode.parentNode
+            }
+            return rangeNode.parentNode
+        }
+
+        
+        function createTimezonifyPopover(parentNode, rect, text){
+            const sharedID = "babasquat"
+            let button = document.createElement("button");
+            button.style.top = rect.top > rect.height ? (rect.top - rect.height - 6 + "px") : (rect.top + rect.height + 3 + "px");
+            // button.style.top = rect.top - rect.height / 2 + "px"
+            button.style.left = rect.left + "px"
+            button.className = "timezonify-popover"
+            button.innerText = "Timezonify";
+            button.dataset.text = text;
+            button.dataset.parentID = sharedID
+            button.onclick = (e) => {
+                const timezonified = timezonify(text);
+                if(!timezonified){
+                    console.error("Not a valid time")
+                    button.innerText = "Not a valid time"
+                    setTimeout(() => {
+                        console.log(e.target)
+                        e.target.parentNode.removeChild(e.target)
+                    }, 1500)
+                    return;
+                } 
+                button.classList.add("timezonify-time-popover")
+                button.style.top = rect.top - rect.height / 2 + "px"
+                button.style.left = rect.left + "px"
+                button.innerText = timezonified
+            }
+            
+            // parentNode.style.position = "relative"
+            parentNode.id = sharedID
+            parentNode.append(button)
+        }
+
+        function createTimePopover(parentNode, rect, replacement){
+            let button = document.createElement("button");
+            button.style.top = rect.top > rect.height ? (rect.top - rect.height - 6 + "px") : (rect.top + rect.height + 3 + "px");
+            button.style.left = rect.left + "px"
+            
+            button.className = "timezonify-time-popover"
+            button.innerText = replacement;
+            // button.onclick = (e) => {
+            //     createTimePopover(parentNode, rect, timezonified)
+            // }
+            // parentNode.style.position = "relative"
+            parentNode.append(button)
+        }
+
+        function timezonify(text){
+            var regex = /\s?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s+([A-Z]{2,4})/gm            
+            const match = text.match(regex)
+            const replacement = replaceTime(text, regex)
+            return replacement
+        }
+
+        function replaceTime(text, regex){
+            const matches = text.match(regex)
+            if(matches){
+                for(let match of matches){
+                    const convertedTime = convertTime(regex, match)
+                    return convertedTime
+                }
+            }
+        }
+
+        function convertTime(regex, string){
+
+            const groups = regex.exec(string);
+                    
+            const hour = groups[2] ?? groups[5];
+            const minute = groups[3] ?? groups[6];
+            const meridian = groups[4];
+            const timezone = groups[7];
+            const sourceTimezoneData = findTimezoneDataFromTimezone(timezone);
+            const clientTimezoneData = getClientTimezoneData();
+            if(sourceTimezoneData){
+                const {
+                    hour: targetHour,
+                    minute: targetMinute,
+                    meridian: targetMeridian
+                } = getOffsetTime(
+                    hour,
+                    minute,
+                    sourceTimezoneData.offset,
+                    clientTimezoneData.offset,
+                    meridian
+                );
+                const targetTimeString =
+                    targetHour +
+                    ":" +
+                    targetMinute +
+                    targetMeridian +
+                    " " +
+                    clientTimezoneData.abbr;
+                return targetTimeString   
+            } else {
+                
+                throw `Exception: ${timezone} is not a timezone!`
+            }
+                    
+        }
+
+        function getClientTimezoneData() {
+            // const offset = new Date().getTimezoneOffset() / 60;
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const clientTimezoneData = findTimezoneDataFromTimezoneUtc(timezone);
+            return clientTimezoneData;
+        }
+        
+        function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
+            return _timezones.find((timezone) => {
+            const containsUtc =
+                timezone.utc.filter((utc) => {
+                return utc === timezoneUtc;
+                }).length > 0;
+            return containsUtc;
+            });
+        }
+        
+        function getOffsetTime(hour, minute, sourceOffset, clientOffset, meridian) {
+            const { hour: cleanedClientOffset, minute: clientMinute } = cleanTimeOffset(
+            clientOffset
+            );
+            const { hour: cleanedSourceOffset, minute: sourceMinute } = cleanTimeOffset(
+            sourceOffset
+            );
+            // console.log(hour);
+            // console.log(cleanedSourceOffset);
+            // console.log(cleanedClientOffset);
+            hour = hour - cleanedSourceOffset + cleanedClientOffset;
+            minute = minute - sourceMinute + clientMinute;
+            return formatTime(hour, minute, meridian, meridian == null);
+        }
+        
+        function formatTime(hour, minute, meridian, is24hr) {
+            if(is24hr){
+        
+            if (minute >= 60) {
+                minute -= 60;
+                hour += 1;
+            } else if (minute < 0) {
+                minute += 60;
+                hour -= 1;
+            }
+        
+            if(minute === 0){
+                minute = "00"
+            }
+        
+            if(hour > 24){
+                hour -= 24;
+            }
+        
+            if(hour < 10){
+                hour = "0" + hour 
+            }
+        
+            return {hour, minute, meridian: ""}
+            }
+        
+            if (minute >= 60) {
+                minute -= 60;
+                hour += 1;
+            } else if (minute < 0) {
+                minute += 60;
+                hour -= 1;
+            }
+
+            if(minute === 0){
+                minute = "00"
+            }
+
+            if (hour > 12) {
+                hour = hour - 12;
+                meridian = meridian ? (meridian === "am" ? "pm" : "am") : "";
+            }
+            return { hour, minute, meridian };
+            
+        }
+        
+        function findTimezoneDataFromTimezone(timezone) {
+            return _timezones.find((timezoneData) => timezoneData.abbr === timezone);
+        }
+        
+        function cleanTimeOffset(offset) {
+            let decimalPlace = offset % 1;
+            let hour = offset - decimalPlace;
+            return { hour, minute: decimalPlace * 60 };
+        }
+    </script> -->
+</body>
+</html>

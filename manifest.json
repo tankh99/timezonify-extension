@@ -23,5 +23,8 @@
             "matches": ["<all_urls>"],
             "js": ["content_scripts/timezonify.js"]
         }
+    ],
+    "web_accessible_resources": [
+        "timezonify.css"
     ]
 }
