@@ -1,4 +1,5 @@
 
+var enabled;
 (() => {
 
     if(window.hasRun){
@@ -6,13 +7,10 @@
     }
 
     window.hasRun = true;
-
-
+    enabled = true
     browser.runtime.onMessage.addListener((message) => {
-        if(message.command == "timezonify"){
-            alert("Timezonifying!")
-        } else if (message.command == "reset"){
-            alert("Resetting!")
+        if (message.command === "toggle"){
+            enabled = !enabled
         }
     })
 
@@ -29,7 +27,6 @@ var prevRange = null;
 
 function removePopovers(){
   const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
-  console.log(popovers)
   for(let popover of popovers){
       popover.remove();
   }
@@ -42,26 +39,50 @@ function addPopover(range){
     createTimezonifyPopover(parentNode, rect, range.toString())
 }
 
+async function fetchTimezonesData(){
+  const dataUrl = browser.runtime.getURL("/data/timezones.json");
+  const timezones = await(await fetch(dataUrl)).json()
+  return timezones
+}
 
 document.onmouseup = async (e) => {
-  console.log(e.target)
-  if(e.target.classList.contains("timezonify-popover")) return;
 
-  const dataUrl = browser.runtime.getURL("/data/timezones.json");
-  _timezones = await(await fetch(dataUrl)).json()
+  browser.runtime.sendMessage({
+    msg: "HELP",
+    data: {
+      text: "TEXT"
+    }
+  })
 
-  const sel = document.getSelection();
-  const range = sel.getRangeAt(0)
-  var regex = /(?<!\S)((1[0-2]|0?[0-9]):([0-5]?[0-9]?)([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s?([A-Z]{2,4})/gm
-  // if(e.target.classList.contains("timezonify-popover")) return;
-  
-  const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
-  
-  if(prevRange !== null && !checkSameRange(prevRange, range)){  // user selected different text
+  if(enabled){
+    if(e.target.classList.contains("timezonify-popover")) return;
+    _timezones = await fetchTimezonesData();
+
+    const sel = document.getSelection();
+    const range = sel.getRangeAt(0)
+    // var regex = /(?<!\S)((1[0-2]|0?[0-9]):([0-5]?[0-9]?)([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s?([A-Z]{2,4})/gm
+    const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
+    
+    // 2 scenarios
+    // 1. user highlights the same text
+    // 2. user clicks on the highlighted text
+    
+    if(!checkSameRange(prevRange, range)){ // if highlighted different text
+      if(prevRange !== null){  // user selected different text
+        console.log("removing")
+        removePopovers()
+      } 
+      if(!sel.isCollapsed){
+        console.log("adding")
+        addPopover(range)
+      }
+    } else if (popovers.length >= 1){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
+      removePopovers()
+    } else if (popovers.length < 1){
+      addPopover(range)
+    }
+  } else {
     removePopovers()
-    if(!sel.isCollapsed && popovers.length < 1) addPopover(range) // user didn't just click away
-  } else if(popovers.length < 1 && !sel.isCollapsed){
-    addPopover(range)
   }
 }
 
@@ -102,13 +123,15 @@ function createTimezonifyPopover(parentNode, rect, text){
   button.style.padding = 4 + "px"
   button.style.userSelect = "none"
   button.style.zIndex = 9999;
+  button.style.wordWrap = "break-word"
   // button.style.fontSize = document.body.fontSize + "px"
 
   button.className = "timezonify-popover"
   button.innerText = "Timezonify";
-  button.dataset.text = text;
   // button.dataset.parentID = sharedID
   button.onclick = (e) => {
+    try{
+
       const timezonified = timezonify(text);
       if(!timezonified){
           console.error("Not a valid time")
@@ -119,10 +142,21 @@ function createTimezonifyPopover(parentNode, rect, text){
           return;
       } 
       button.classList.add("timezonify-time-popover")
-      button.style.top = rect.top + "px"
-      button.style.left = rect.left + "px"
+      button.style.display = "flex"
+      button.style.alignItems = "center"
+      button.style.top = rect.top + window.scrollY + "px"
+      button.style.left = rect.left + window.scrollX + "px"
+      button.style.height = rect.height + "px";
+      button.style.width = "auto";
       button.style.opacity = 1;
       button.innerText = timezonified;
+    } catch (e){
+      console.log(e)
+      button.innerText = e
+      setTimeout(() => {
+          e.target.parentNode.removeChild(e.target)
+      }, 1500)
+    }
   }
 
   button.ondblclick = (e) => {
@@ -133,21 +167,6 @@ function createTimezonifyPopover(parentNode, rect, text){
   // parentNode.id = sharedID
   document.body.append(button)
 }
-
-function createTimePopover(parentNode, rect, replacement){
-  let button = document.createElement("button");
-  button.style.top = rect.top > rect.height ? (rect.top - rect.height - 6 + "px") : (rect.top + rect.height + 3 + "px");
-  button.style.left = rect.left + "px"
-  
-  button.className = "timezonify-time-popover"
-  button.innerText = replacement;
-  // button.onclick = (e) => {
-  //     createTimePopover(parentNode, rect, timezonified)
-  // }
-  parentNode.style.position = "unset"
-  parentNode.append(button)
-}
-
 
 function timezonify(text){
   var regex = /\s?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s+([A-Z]{2,4})/gm            
@@ -194,10 +213,11 @@ function convertTime(regex, string){
           targetMeridian +
           " " +
           clientTimezoneData.abbr;
+          console.log(targetTimeString)
       return targetTimeString   
   } else {
       console.error(`Exception: ${timezone} is not a timezone!`)
-      throw `Exception: ${timezone} is not a timezone!`
+      throw `${timezone} is not a timezone!`
   }
           
 }
@@ -208,6 +228,10 @@ function convertTime(regex, string){
     const utc = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const timezoneData = findTimezoneDataFromTimezoneUtc(utc)
     return timezoneData;
+  }
+  
+  function findTimezoneDataFromTimezone(timezone) {
+    return _timezones.find((timezoneData) => timezoneData.abbr === timezone || (timezoneData.aliases && timezoneData.aliases.includes(timezone)));
   }
   
   function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
@@ -283,9 +307,6 @@ function convertTime(regex, string){
     
   }
   
-  function findTimezoneDataFromTimezone(timezone) {
-    return _timezones.find((timezoneData) => timezoneData.abbr === timezone);
-  }
   
   function cleanTimeOffset(offset) {
     let decimalPlace = offset % 1;

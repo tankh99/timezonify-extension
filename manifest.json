@@ -8,12 +8,13 @@
     },
     "permissions": [
         "activeTab",
-        "contextMenus"
+        "contextMenus",
+        "storage"
     ],
     "browser_action": {
         "default_icon": "icons/clock-64.png",
         "default_title": "Timezonify",
-        "default_popup": "popup/select-timezone.html"
+        "default_popup": "popup/timezonify-config.html"
     },
     "background": {
         "scripts": ["/background/background.js"]
@@ -25,6 +26,11 @@
         }
     ],
     "web_accessible_resources": [
-        "timezonify.css"
-    ]
+        
+    ],
+    "browser_specific_settings": {
+        "gecko":{
+            "id": "{a0da06f4-9f95-41f1-9e42-eb189dc8c758}"
+        }
+    }
 }

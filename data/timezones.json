@@ -527,7 +527,8 @@
         "Europe/Guernsey",
         "Europe/Jersey",
         "Europe/London"
-      ]
+      ],
+      "aliases": ["UK"]
     },
     {
       "value": "GMT Standard Time",
