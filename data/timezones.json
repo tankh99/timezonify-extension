@@ -72,7 +72,8 @@
         "America/Tijuana",
         "America/Vancouver",
         "America/Whitehorse"
-      ]
+      ],
+      "aliases": ["PT"]
     },
     {
       "value": "Pacific Standard Time",
@@ -238,7 +239,8 @@
         "America/Thunder_Bay",
         "America/Toronto",
         "EST5EDT"
-      ]
+      ],
+      "aliases": ["ET", "EST"]
     },
     {
       "value": "US Eastern Standard Time",
@@ -545,8 +547,8 @@
       ]
     },
     {
-      "value": "Greenwich Standard Time",
-      "abbr": "GST",
+      "value": "Greenwich Mean Time",
+      "abbr": "GMT",
       "offset": 0,
       "isdst": false,
       "text": "(UTC) Monrovia, Reykjavik",
@@ -566,6 +568,14 @@
         "Africa/Sao_Tome",
         "Atlantic/Reykjavik",
         "Atlantic/St_Helena"
+      ]
+    },
+    {
+      "value": "Gulf Standard Time",
+      "abbr": "GST",
+      "offset": 4,
+      "utc": [
+        
       ]
     },
     {

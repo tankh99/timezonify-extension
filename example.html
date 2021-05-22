@@ -43,6 +43,34 @@
         Blue bird red stone
     </p>
     </div>
+    <div id="dummy"></div>
+    <button onclick="highlightText()">Highlight Text</button>
+    <script>
+      function highlightText(){
+  
+        const sel = document.getSelection();
+        console.log(sel)
+        
+        // const range = sel.getRangeAt(0)
+        // const parentNode = range.commonAncestorContainer;
+        // console.log(range)
+        // const regex = /blue|red/igm
+  
+  
+        const textRange = document.createRange();
+        const container = document.querySelector("#test")
+        // textRange.moveToElement(container)
+        
+        const highlighted = document.createElement("span");
+        highlighted.setAttribute("style", "background-color: yellow; display: inline");
+        // textRange.collapse(true);
+        textRange.setStart(container, 0);
+        textRange.setEndAfter(container);
+        console.log(textRange.toString())
+        textRange.surroundContents(highlighted)
+      }
+    
+    </script>
     <!-- <script>
 
         const _timezones = [

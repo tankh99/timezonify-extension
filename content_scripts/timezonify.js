@@ -18,14 +18,14 @@ function getStorageValue(key){
         return;
     }
     // enabled = true
-    browser.runtime.onMessage.addListener((message) => {
-      // if (message.command === "toggle"){
-      //     enabled = !enabled
-      // }
-    })
+    // browser.runtime.onMessage.addListener((message) => {
+    //   // if (message.command === "toggle"){
+    //   //     enabled = !enabled
+    //   // }
+    // })
 
     browser.storage.onChanged.addListener((storage) => {
-      console.log(storage)
+      // console.log(storage.enabled.newValue)
       enabled = storage.enabled.newValue
     })
 
@@ -39,7 +39,6 @@ async function init(){
   getStorageValue("enabled")
   .then((res) => {
     enabled = res;
-    console.log(res)
     if(enabled == null) {
         enabled = true;
         browser.storage.sync.set({enabled: true})
@@ -76,40 +75,6 @@ async function fetchTimezonesData(){
   return timezones
 }
 
-document.onmouseup = async (e) => {
-
-  if(enabled){
-    if(e.target.classList.contains("timezonify-popover")) return;
-    _timezones = await fetchTimezonesData();
-
-    const sel = document.getSelection();
-    const range = sel.getRangeAt(0)
-    // var regex = /(?<!\S)((1[0-2]|0?[0-9]):([0-5]?[0-9]?)([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s?([A-Z]{2,4})/gm
-    const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
-    
-    // 2 scenarios
-    // 1. user highlights the same text
-    // 2. user clicks on the highlighted text
-    
-    if(!checkSameRange(prevRange, range)){ // if highlighted different text
-      if(prevRange !== null){  // user selected different text
-        console.log("removing")
-        removePopovers()
-      } 
-      if(!sel.isCollapsed){
-        console.log("adding")
-        addPopover(range)
-      }
-    } else if (popovers.length >= 1){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
-      removePopovers()
-    } else if (popovers.length < 1){
-      addPopover(range)
-    }
-  } else {
-    removePopovers()
-  }
-}
-
 
 function checkSameRange(prevRange, newRange){
   if(prevRange !== null && 
@@ -133,13 +98,13 @@ function getRangeParentNode(range){
 function createTimezonifyPopover(parentNode, rect, text){
   let button = document.createElement("button");
   let textHeight = parseInt(window.getComputedStyle(parentNode).fontSize, 10)
-  button.style.top = (rect.top > rect.height ? rect.top - (textHeight) - 6 : rect.top + textHeight + 3) + window.scrollY + "px";
+  // let lineHeight = window.getComputedStyle(parentNode).lineHeight === "normal" ? textHeight * 1.2 : parseInt(window.getComputedStyle(parentNode).lineHeight, 10)
+  button.style.top = (rect.top > rect.height ? (rect.top - textHeight - 12) : (rect.top + textHeight + 6)) + window.scrollY + "px";
   
   // button.style.top = rect.top - rect.height / 2 + "px"
   button.style.left = rect.left + window.scrollX + "px"
   button.style.position = "absolute";
-  button.style.opacity = 0.7;
-  button.style.backgroundColor = "black";
+  button.style.backgroundColor = "rgba(0,0,0,0.7)";
   button.style.color = "white";
   button.style.border = "none"
   button.style.borderRadius = 4 + "px"
@@ -148,7 +113,7 @@ function createTimezonifyPopover(parentNode, rect, text){
   button.style.userSelect = "none"
   button.style.zIndex = 9999;
   button.style.wordWrap = "break-word"
-  // button.style.fontSize = document.body.fontSize + "px"
+  button.style.fontSize = window.getComputedStyle(parentNode).fontSize
 
   button.className = "timezonify-popover"
   button.innerText = "Timezonify";
@@ -168,11 +133,13 @@ function createTimezonifyPopover(parentNode, rect, text){
       button.classList.add("timezonify-time-popover")
       button.style.display = "flex"
       button.style.alignItems = "center"
+      button.style.justifyContent = "center";
       button.style.top = rect.top + window.scrollY + "px"
       button.style.left = rect.left + window.scrollX + "px"
       button.style.height = rect.height + "px";
       button.style.width = "auto";
-      button.style.opacity = 1;
+      
+      button.style.backgroundColor = "black";
       button.innerText = timezonified;
     } catch (e){
       console.log(e)
@@ -200,6 +167,7 @@ function timezonify(text){
 
 function replaceTime(text, regex){
   const matches = text.match(regex)
+  
   if(matches){
       for(let match of matches){
           const convertedTime = convertTime(regex, match)
@@ -217,7 +185,7 @@ function convertTime(regex, string){
   const timezone = groups[7];
   const sourceTimezoneData = findTimezoneDataFromTimezone(timezone);
   const clientTimezoneData = getClientTimezoneData();
-  // console.log(clientTimezoneData)
+  
   if(sourceTimezoneData){
       const {
           hour: targetHour,
@@ -267,6 +235,7 @@ function convertTime(regex, string){
     });
   }
   
+  // 
   function getOffsetTime(hour, minute, sourceOffset, clientOffset, meridian) {
     const { hour: cleanedClientOffset, minute: clientMinute } = cleanTimeOffset(
       clientOffset
@@ -324,17 +293,51 @@ function convertTime(regex, string){
 
     if (hour > 12) {
         hour = hour - 12;
-        meridian = meridian ? (meridian === "am" ? "pm" : "am") : "";
+        meridian = meridian ? (meridian.toLowerCase() === "am" ? "pm" : "am") : "";
     }
     return { hour, minute, meridian };
     
   }
   
-  
+  // converts the decimal places in some offsets to be properly accounted inside the minute value instead of the hour value
   function cleanTimeOffset(offset) {
     let decimalPlace = offset % 1;
     let hour = offset - decimalPlace;
     return { hour, minute: decimalPlace * 60 };
   }
+
+
+document.onmouseup = async (e) => {
+  if(enabled){
+    if(e.target.classList.contains("timezonify-popover")) return;
+    _timezones = await fetchTimezonesData();
+
+    const sel = document.getSelection();
+    const range = sel.getRangeAt(0)
+    // var regex = /(?<!\S)((1[0-2]|0?[0-9]):([0-5]?[0-9]?)([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s?([A-Z]{2,4})/gm
+    const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
+    
+    // 2 scenarios
+    // 1. user highlights the same text
+    // 2. user clicks on the highlighted text
+    
+    if(!checkSameRange(prevRange, range)){ // if highlighted different text
+      if(prevRange !== null){  // user selected different text
+        // console.log("removing")
+        removePopovers()
+      } 
+      if(!sel.isCollapsed){
+        // console.log("adding")
+        addPopover(range)
+      }
+    } else if (popovers.length >= 1){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
+      removePopovers()
+    } else if (popovers.length < 1){
+      addPopover(range)
+    }
+  } else {
+    removePopovers()
+  }
+}
 
 browser.runtime.onMessage.addListener(timezonifyReceiver)
