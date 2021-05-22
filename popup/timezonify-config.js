@@ -1,8 +1,10 @@
 // import timezones from '../timezones.json'
 
+// const src = browser.runtime.getURL("data/storage.js");
+// const storage = await import(src);
+
 function setStorageValue(key, value){
     browser.storage.sync.set({[key]: value})
-    // console.log("FUCK")
 }
 
 function getStorageValue(key){
@@ -19,16 +21,16 @@ function getCurrentTab(){
 }
 
 var enabled; 
+var storage;
 
-function init(){
+async function init(){
     getStorageValue("enabled")
     .then((res) => {
-        if(res){
-            enabled = res
-        } else { // set default value
+        enabled = res;
+        if(enabled == null) {
             setStorageValue("enabled", true)
             enabled = true;
-        } 
+        }
         updateIndicator(enabled)
     })
 }
@@ -39,14 +41,6 @@ function updateIndicator(_enabled){
 }
 
 
-(() => {
-    if(!window.hasRun){
-        init();
-    }
-
-    window.hasRun = true;
-})()
-
 function onClickListener(){
     
     document.addEventListener("click", (e) => {
@@ -54,9 +48,9 @@ function onClickListener(){
         function toggleTimezonify(tabs){    
             setStorageValue("enabled", !enabled);
             updateIndicator(!enabled)
-            browser.tabs.sendMessage(tabs[0].id, {
-                command: "toggle",
-            })
+            // browser.tabs.sendMessage(tabs[0].id, {
+            //     command: "toggle",
+            // })
         }
 
         function reportError(error){
@@ -65,7 +59,7 @@ function onClickListener(){
 
         if (e.target.classList.contains("toggle-timezonify-btn")){
             // setStorageValue("enabled", !enabled)
-            getCurrentTab()
+            browser.tabs.query({active: true, currentWindow: true})
             .then(toggleTimezonify)
             .catch(reportError)
         }
@@ -76,10 +70,16 @@ function reportScriptError(error){
     console.error(`Failed to execute timezonify content script: ${error.message}`);
 }
 
-browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
-.then(onClickListener)
-.catch(reportScriptError)
 
-browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log(request)
-})
+(() => {
+    init();
+    if(window.hasRun){
+        return
+    }
+
+    browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
+    .then(onClickListener)
+    .catch(reportScriptError)
+    window.hasRun = true;
+})()
+

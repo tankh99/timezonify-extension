@@ -1,20 +1,51 @@
-
 var enabled;
-(() => {
 
+function setStorageValue(key, value){
+  browser.storage.sync.set({[key]: value})
+}
+
+function getStorageValue(key){
+  return new Promise((resolve) => {
+      var gettingValue = browser.storage.sync.get([key]);
+      gettingValue.then((res) => {
+          return resolve(res[key]);
+      })
+  })
+}
+
+(() => {
     if(window.hasRun){
         return;
     }
-
-    window.hasRun = true;
-    enabled = true
+    // enabled = true
     browser.runtime.onMessage.addListener((message) => {
-        if (message.command === "toggle"){
-            enabled = !enabled
-        }
+      // if (message.command === "toggle"){
+      //     enabled = !enabled
+      // }
     })
 
+    browser.storage.onChanged.addListener((storage) => {
+      console.log(storage)
+      enabled = storage.enabled.newValue
+    })
+
+    init();
+
+    window.hasRun = true;
 })()
+
+    
+async function init(){
+  getStorageValue("enabled")
+  .then((res) => {
+    enabled = res;
+    console.log(res)
+    if(enabled == null) {
+        enabled = true;
+        browser.storage.sync.set({enabled: true})
+    }
+  })
+}
 
 var _timezones = []
 function timezonifyReceiver(request, sender, sendResponse){
@@ -46,13 +77,6 @@ async function fetchTimezonesData(){
 }
 
 document.onmouseup = async (e) => {
-
-  browser.runtime.sendMessage({
-    msg: "HELP",
-    data: {
-      text: "TEXT"
-    }
-  })
 
   if(enabled){
     if(e.target.classList.contains("timezonify-popover")) return;
@@ -213,7 +237,6 @@ function convertTime(regex, string){
           targetMeridian +
           " " +
           clientTimezoneData.abbr;
-          console.log(targetTimeString)
       return targetTimeString   
   } else {
       console.error(`Exception: ${timezone} is not a timezone!`)
