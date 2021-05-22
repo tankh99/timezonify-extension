@@ -3,9 +3,8 @@ Makes all timings local.
 
 Todo:
 1. Add support for more timezones
-2. Allow user to toggle whether highlighting text will show the popover
-3. Allow group select for multiple valid times
-4. Fix highlighting of same text resulting in the removal of the timezonify popup
+2. Allow group select for multiple valid times
+3. Fix highlighting of same text resulting in the removal of the timezonify popup
 
 v2.0: Simply highlight the text you want to convert, click on Timezonify and voila! It overlays the new timing over the highlighted text. Double-click the overlay if you wish to delete it
 

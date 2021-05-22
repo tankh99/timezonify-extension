@@ -33,10 +33,10 @@
       <b>IST</b>
     </div>
     <div class="relative">
-    <p id="test">
+    <p >
         The <i>blue</i> bird <b>eats</b> up the <i>wriggly</i> worm
     </p>
-    <p>
+    <p id="test">
         A <i>blue</i> bird is a red stone
     </p>
     <p>
@@ -49,7 +49,7 @@
       function highlightText(){
   
         const sel = document.getSelection();
-        console.log(sel)
+        // console.log(sel)
         
         // const range = sel.getRangeAt(0)
         // const parentNode = range.commonAncestorContainer;
@@ -57,17 +57,21 @@
         // const regex = /blue|red/igm
   
   
-        const textRange = document.createRange();
         const container = document.querySelector("#test")
         // textRange.moveToElement(container)
-        
+        const regex = /blue|red/igm
         const highlighted = document.createElement("span");
         highlighted.setAttribute("style", "background-color: yellow; display: inline");
-        // textRange.collapse(true);
-        textRange.setStart(container, 0);
-        textRange.setEndAfter(container);
-        console.log(textRange.toString())
-        textRange.surroundContents(highlighted)
+        console.log(container)
+        while(match = regex.exec(sel.toString())){
+            const textRange = document.createRange();
+            const word = match[0]
+            console.log(match.index);
+            textRange.setStart(container, match.index);
+            textRange.setEnd(container, match.index + word.length);
+            console.log(textRange)
+            console.log(textRange.toString())
+        }
       }
     
     </script>

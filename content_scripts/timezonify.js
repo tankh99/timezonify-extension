@@ -100,8 +100,6 @@ function createTimezonifyPopover(parentNode, rect, text){
   let textHeight = parseInt(window.getComputedStyle(parentNode).fontSize, 10)
   // let lineHeight = window.getComputedStyle(parentNode).lineHeight === "normal" ? textHeight * 1.2 : parseInt(window.getComputedStyle(parentNode).lineHeight, 10)
   button.style.top = (rect.top > rect.height ? (rect.top - textHeight - 12) : (rect.top + rect.height)) + window.scrollY + "px";
-  
-  // button.style.top = rect.top - rect.height / 2 + "px"
   button.style.left = rect.left + window.scrollX + "px"
   button.style.position = "absolute";
   button.style.backgroundColor = "rgba(0,0,0,0.7)";
@@ -113,7 +111,7 @@ function createTimezonifyPopover(parentNode, rect, text){
   button.style.userSelect = "none"
   button.style.zIndex = 9999;
   button.style.wordWrap = "break-word"
-  button.style.fontSize = window.getComputedStyle(parentNode).fontSize
+  button.style.fontSize = parseInt(window.getComputedStyle(parentNode).fontSize, 10) + "px"
 
   button.className = "timezonify-popover"
   button.innerText = "Timezonify";
@@ -136,9 +134,8 @@ function createTimezonifyPopover(parentNode, rect, text){
       button.style.justifyContent = "center";
       button.style.top = rect.top + window.scrollY + "px"
       button.style.left = rect.left + window.scrollX + "px"
-      button.style.height = rect.height + "px";
+      button.style.height = textHeight + "px";
       button.style.width = "auto";
-      
       button.style.backgroundColor = "black";
       button.innerText = timezonified;
     } catch (e){
