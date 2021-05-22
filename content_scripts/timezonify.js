@@ -99,7 +99,7 @@ function createTimezonifyPopover(parentNode, rect, text){
   let button = document.createElement("button");
   let textHeight = parseInt(window.getComputedStyle(parentNode).fontSize, 10)
   // let lineHeight = window.getComputedStyle(parentNode).lineHeight === "normal" ? textHeight * 1.2 : parseInt(window.getComputedStyle(parentNode).lineHeight, 10)
-  button.style.top = (rect.top > rect.height ? (rect.top - textHeight - 12) : (rect.top + textHeight + 6)) + window.scrollY + "px";
+  button.style.top = (rect.top > rect.height ? (rect.top - textHeight - 12) : (rect.top + rect.height)) + window.scrollY + "px";
   
   // button.style.top = rect.top - rect.height / 2 + "px"
   button.style.left = rect.left + window.scrollX + "px"
