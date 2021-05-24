@@ -1,10 +1,10 @@
 # timezonify-extension
 Makes all timings local. 
 
-Todo:
-1. Add support for more timezones
-2. Allow group select for multiple valid times
-3. Fix highlighting of same text resulting in the removal of the timezonify popup
+
+# Version History:
+
+v2.1: Added a toggle feature to enable/disable timezonify highlighting. Added support for common timezones
 
 v2.0: Simply highlight the text you want to convert, click on Timezonify and voila! It overlays the new timing over the highlighted text. Double-click the overlay if you wish to delete it
 

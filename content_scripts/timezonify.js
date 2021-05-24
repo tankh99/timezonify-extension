@@ -25,8 +25,11 @@ function getStorageValue(key){
     // })
 
     browser.storage.onChanged.addListener((storage) => {
-      // console.log(storage.enabled.newValue)
       enabled = storage.enabled.newValue
+      document.querySelectorAll(".timezonify-time-popover").forEach((item) => {
+          if(enabled) item.style.display = "flex"
+          else item.style.display = "none"
+      })
     })
 
     init();

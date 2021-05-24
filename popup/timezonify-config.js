@@ -38,6 +38,7 @@ async function init(){
 function updateIndicator(_enabled){
     enabled = _enabled
     document.querySelector("#enabled-indicator").innerText = _enabled ? "Enabled" : "Disabled"
+    document.querySelector(".toggle-timezonify-btn").checked = _enabled;
 }
 
 
@@ -45,12 +46,9 @@ function onClickListener(){
     
     document.addEventListener("click", (e) => {
 
-        function toggleTimezonify(tabs){    
+        function toggleTimezonify(){    
             setStorageValue("enabled", !enabled);
             updateIndicator(!enabled)
-            // browser.tabs.sendMessage(tabs[0].id, {
-            //     command: "toggle",
-            // })
         }
 
         function reportError(error){
@@ -58,10 +56,11 @@ function onClickListener(){
         }
 
         if (e.target.classList.contains("toggle-timezonify-btn")){
-            // setStorageValue("enabled", !enabled)
-            browser.tabs.query({active: true, currentWindow: true})
-            .then(toggleTimezonify)
-            .catch(reportError)
+            
+            toggleTimezonify();
+            // browser.tabs.query({active: true, currentWindow: true})
+            // .then(toggleTimezonify)
+            // .catch(reportError)
         }
     })
 }

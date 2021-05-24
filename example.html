@@ -24,6 +24,9 @@
 <body>
     
     <b>11:00pm GST</b>
+    <div id="time-test">
+        The time is 11:00pm IST now
+    </div>
     <div id="target" class="text-dark-gray font-size-6">
         <span>10:00AM</span>
         <meta itemprop="startDate" content="2021-05-14 14:00:00 UTC">
@@ -40,22 +43,68 @@
         A <i>blue</i> bird is a red stone
     </p>
     <p>
-        Blue bird red stone
+        The blue bird red stone
     </p>
     </div>
     <div id="dummy"></div>
     <button onclick="highlightText()">Highlight Text</button>
+    <button onclick="iterate()">Iterate</button>
     <script>
+        
+        function iterate(){
+            const node = document.querySelector("#target");
+            var regex = /\s?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s+([A-Z]{2,4})/gm
+            const nodes = iterateThroughNode(node, regex)
+            const string = conjoinNodes(nodes);
+            const matches = regex.exec(string)
+            console.log(nodes)
+            console.log(matches)
+            // var sel = window.getSelection();
+            // let range = document.createRange();
+            // range.setStart(matches[0].node, matches[0].index);
+            // range.setEnd(matches[0].node, matches[0].index + matches[0].value.length);
+            // console.log(range)
+            // sel.addRange(range)
+            // console.log(range.toString());
+            
+            // for(let match of matches){
+            //     const {node: childNode} = match;
+            //     if(node === childNode){
+            //         range.setStart
+            //     }
+            // }
+        }
+
+        function conjoinNodes(nodes){
+            let prevValidValue = ""
+            return nodes.map((item, index) => {
+                const {textContent} = item
+                if(textContent){
+                    prevValidValue = textContent
+                }
+            })
+        }
+
+        function iterateThroughNode(node, regex){
+            let indexes = []
+            if(node.nodeType == Node.TEXT_NODE){
+                // const match = regex.exec(node.textContent);
+                // if(match && match.length > 0){
+                //     return {node: node, index: match.index, value: match[0]}
+                // } 
+                return node
+            }
+            node.childNodes.forEach((item, index) => {
+                const result = (iterateThroughNode(item, regex))
+                if(result){
+                    indexes = indexes.concat(result)
+                }
+            })
+            return indexes;
+        }
       function highlightText(){
   
         const sel = document.getSelection();
-        // console.log(sel)
-        
-        // const range = sel.getRangeAt(0)
-        // const parentNode = range.commonAncestorContainer;
-        // console.log(range)
-        // const regex = /blue|red/igm
-  
   
         const container = document.querySelector("#test")
         // textRange.moveToElement(container)
