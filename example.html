@@ -31,10 +31,11 @@
         <span>10:00AM</span>
         <meta itemprop="startDate" content="2021-05-14 14:00:00 UTC">
         <span> to </span>
-            <i>May 16, 2:00PM</i>
+            <i>May 16, IST 2:00PM</i>
         <meta itemprop="endDate" content="2021-05-16 18:00:00 UTC">
-      <b>IST</b>
+      <b>IST, it's IST got it!?</b>
     </div>
+    <p>2:30 PM IST</p>
     <div class="relative">
     <p >
         The <i>blue</i> bird <b>eats</b> up the <i>wriggly</i> worm
@@ -54,11 +55,32 @@
         function iterate(){
             const node = document.querySelector("#target");
             var regex = /\s?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s+([A-Z]{2,4})/gm
-            const nodes = iterateThroughNode(node, regex)
-            const string = conjoinNodes(nodes);
-            const matches = regex.exec(string)
-            console.log(nodes)
-            console.log(matches)
+            const groups = regex.exec(node.textContent)
+            if(groups){
+                
+                const hour = groups[2] ?? groups[5];
+                const minute = groups[3] ?? groups[6];
+                const meridian = groups[4];
+                const timezone = groups[7];
+                const dynamicRegex = new RegExp(`(${hour}:${minute})|(${meridian})|(${timezone})`, "gm")
+                const nodes = iterateThroughNode(node, dynamicRegex)
+                let range = document.createRange();
+
+                let startFound = false;
+                for(let node of nodes){
+                    if(node.value === `${hour}:${minute}`){
+                        range.setStart(node.node, node.index)
+                        startFound = true
+                    }
+                    if(startFound && node.value.trim() === timezone){
+                        range.setEnd(node.node, node.index + node.value.length)
+                        break;
+                    }
+                }
+                // range.setEnd(nodes[nodes.length-1].node, nodes[nodes.length-1].index + nodes[nodes.length-1].value.length);
+                let sel = document.getSelection();
+                sel.addRange(range)
+            }
             // var sel = window.getSelection();
             // let range = document.createRange();
             // range.setStart(matches[0].node, matches[0].index);
@@ -88,11 +110,14 @@
         function iterateThroughNode(node, regex){
             let indexes = []
             if(node.nodeType == Node.TEXT_NODE){
-                // const match = regex.exec(node.textContent);
-                // if(match && match.length > 0){
-                //     return {node: node, index: match.index, value: match[0]}
-                // } 
-                return node
+                const results = []
+                while(match = regex.exec(node.textContent)){
+                    console.log(match)
+                    if(match && match.length > 0){
+                        results.push({node: node, index: match.index, value: match[0]})
+                    } 
+                }
+                return results;
             }
             node.childNodes.forEach((item, index) => {
                 const result = (iterateThroughNode(item, regex))

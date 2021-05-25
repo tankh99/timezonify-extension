@@ -13,6 +13,10 @@
     font-weight: normal;
 }
 
+.text-indicator{
+    font-weight: bold;
+}
+
 .logo{
     max-width: 64px;
 }
@@ -23,9 +27,12 @@
 
 #enabled-indicator{
     line-height: 1.5rem;
-    margin-right: .5em;
     user-select:none;
 
+}
+.text-indicator{
+
+    margin-right: .5em;
 }
 
 .toggle-timezonify-btn{

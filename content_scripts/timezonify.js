@@ -1,31 +1,24 @@
 var enabled;
+var autoHighlight;
+var regex = /\s?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s+([A-Z]{2,4})/gm
+
 
 function setStorageValue(key, value){
   browser.storage.sync.set({[key]: value})
 }
 
-function getStorageValue(key){
-  return new Promise((resolve) => {
-      var gettingValue = browser.storage.sync.get([key]);
-      gettingValue.then((res) => {
-          return resolve(res[key]);
-      })
-  })
+async function getStorageValue(key){
+  var gettingValue = await browser.storage.sync.get([key]);
+  return gettingValue && gettingValue[key]
 }
 
 (() => {
     if(window.hasRun){
         return;
     }
-    // enabled = true
-    // browser.runtime.onMessage.addListener((message) => {
-    //   // if (message.command === "toggle"){
-    //   //     enabled = !enabled
-    //   // }
-    // })
-
     browser.storage.onChanged.addListener((storage) => {
-      enabled = storage.enabled.newValue
+      enabled = storage.enabled != null ? storage.enabled.newValue : enabled
+      autoHighlight = storage.autoHighlight != null ? storage.autoHighlight.newValue : autoHighlight
       document.querySelectorAll(".timezonify-time-popover").forEach((item) => {
           if(enabled) item.style.display = "flex"
           else item.style.display = "none"
@@ -39,14 +32,19 @@ function getStorageValue(key){
 
     
 async function init(){
-  getStorageValue("enabled")
-  .then((res) => {
-    enabled = res;
-    if(enabled == null) {
-        enabled = true;
-        browser.storage.sync.set({enabled: true})
-    }
-  })
+  const _enabled = await getStorageValue("enabled")
+  enabled = _enabled
+  if(enabled == null) {
+      enabled = true;
+      setStorageValue("enabled", true)
+  }
+
+  const _autoHighlight = await getStorageValue("autoHighlight");
+  autoHighlight = _autoHighlight;
+  if(_autoHighlight == null){
+      setStorageValue("autoHighlight", true);
+      autoHighlight = true;
+  }
 }
 
 var _timezones = []
@@ -71,6 +69,7 @@ function addPopover(range){
     prevRange = range
     createTimezonifyPopover(parentNode, rect, range.toString())
 }
+
 
 async function fetchTimezonesData(){
   const dataUrl = browser.runtime.getURL("/data/timezones.json");
@@ -141,9 +140,9 @@ function createTimezonifyPopover(parentNode, rect, text){
       button.style.width = "auto";
       button.style.backgroundColor = "black";
       button.innerText = timezonified;
-    } catch (e){
-      console.log(e)
-      button.innerText = e
+    } catch (ex){
+      console.error(ex)
+      button.innerText = ex
       setTimeout(() => {
           e.target.parentNode.removeChild(e.target)
       }, 1500)
@@ -160,23 +159,22 @@ function createTimezonifyPopover(parentNode, rect, text){
 }
 
 function timezonify(text){
-  var regex = /\s?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s+([A-Z]{2,4})/gm            
-  const replacement = replaceTime(text, regex)
+  const replacement = replaceTime(text)
   return replacement
 }
 
-function replaceTime(text, regex){
+function replaceTime(text){
   const matches = text.match(regex)
   
   if(matches){
       for(let match of matches){
-          const convertedTime = convertTime(regex, match)
+          const convertedTime = convertTime(match)
           return convertedTime
       }
   }
 }
 
-function convertTime(regex, string){
+function convertTime(string){
 
   const groups = regex.exec(string);
   const hour = groups[2] ?? groups[5];
@@ -186,6 +184,8 @@ function convertTime(regex, string){
   const sourceTimezoneData = findTimezoneDataFromTimezone(timezone);
   const clientTimezoneData = getClientTimezoneData();
   
+  
+
   if(sourceTimezoneData){
       const {
           hour: targetHour,
@@ -307,20 +307,67 @@ function convertTime(regex, string){
   }
 
 
+  function iterateThroughNode(node, regex){
+    let indexes = []
+    if(node.nodeType == Node.TEXT_NODE){
+        const results = []
+        while(match = regex.exec(node.textContent)){
+            if(match && match.length > 0){
+                results.push({node: node, index: match.index, value: match[0]})
+            } 
+        }
+        return results;
+    }
+    node.childNodes.forEach((item, index) => {
+        const result = (iterateThroughNode(item, regex))
+        if(result){
+            indexes = indexes.concat(result)
+        }
+    })
+    return indexes;
+}
+
 document.onmouseup = async (e) => {
   if(enabled){
     if(e.target.classList.contains("timezonify-popover")) return;
     _timezones = await fetchTimezonesData();
 
     const sel = document.getSelection();
-    const range = sel.getRangeAt(0)
+    let range = sel.getRangeAt(0)
     // var regex = /(?<!\S)((1[0-2]|0?[0-9]):([0-5]?[0-9]?)([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s?([A-Z]{2,4})/gm
     const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
+    if(autoHighlight && range.toString().match(regex)){
+      // console.log(range.toString());
+      let matches = [...range.toString().matchAll(regex)]
+      const groups = matches[0];
+      sel.removeAllRanges()
+      if(groups){
+        const hour = groups[2] ?? groups[5];
+        const minute = groups[3] ?? groups[6];
+        const meridian = groups[4];
+        const timezone = groups[7];
+        const dynamicRegex = new RegExp(`(${hour}:${minute})|(${meridian})|(${timezone})`, "gm")
+        const nodes = iterateThroughNode(range.commonAncestorContainer, dynamicRegex)
     
+        range = document.createRange();
+        
+        let startFound = false;
+        for(let node of nodes){
+            if(node.value === `${hour}:${minute}`){
+                range.setStart(node.node, node.index)
+                startFound = true
+            }
+            if(startFound && node.value.trim() === timezone){
+                range.setEnd(node.node, node.index + node.value.length)
+                break;
+            }
+        }
+        sel.addRange(range)
+      }
+    }
     // 2 scenarios
     // 1. user highlights the same text
     // 2. user clicks on the highlighted text
-    
     if(!checkSameRange(prevRange, range)){ // if highlighted different text
       if(prevRange !== null){  // user selected different text
         // console.log("removing")

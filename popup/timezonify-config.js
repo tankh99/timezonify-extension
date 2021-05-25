@@ -7,13 +7,9 @@ function setStorageValue(key, value){
     browser.storage.sync.set({[key]: value})
 }
 
-function getStorageValue(key){
-    return new Promise((resolve) => {
-        var gettingValue = browser.storage.sync.get([key]);
-        gettingValue.then((res) => {
-            return resolve(res[key]);
-        })
-    })
+async function getStorageValue(key){
+    var gettingValue = await browser.storage.sync.get([key]);
+    return gettingValue && gettingValue[key]
 }
 
 function getCurrentTab(){
@@ -21,24 +17,39 @@ function getCurrentTab(){
 }
 
 var enabled; 
+var autoHighlight;
 var storage;
 
 async function init(){
-    getStorageValue("enabled")
-    .then((res) => {
-        enabled = res;
-        if(enabled == null) {
-            setStorageValue("enabled", true)
-            enabled = true;
-        }
-        updateIndicator(enabled)
-    })
+    const _enabled = await getStorageValue("enabled")
+    const _autoHighlight = await getStorageValue("autoHighlight");
+    enabled = _enabled
+    updateIndicator("enabled", _enabled)
+    autoHighlight = _autoHighlight;
+    updateIndicator("autoHighlight", _autoHighlight)
+
+
 }
 
-function updateIndicator(_enabled){
-    enabled = _enabled
-    document.querySelector("#enabled-indicator").innerText = _enabled ? "Enabled" : "Disabled"
-    document.querySelector(".toggle-timezonify-btn").checked = _enabled;
+function updateIndicator(key, value){
+    
+    // const indicators = document.querySelectorAll(".text-indicator");
+    // for(let indicator of indicators){
+    //     indicator.innerText = value ? "Enabled" : "Disabled"
+        
+    // }
+
+    const toggles = document.querySelectorAll(".toggle-btn");
+    toggles.forEach((item, index) => {
+        if(item.dataset.type === key){
+            item.checked = value
+        }
+    })
+    // document.querySelector("#enabled-indicator").innerText = _enabled ? "Enabled" : "Disabled"
+    // document.querySelector(".toggle-timezonify-btn").checked = _enabled;
+
+    // document.querySelectorAll("#autoHighlight-indicator").innerText
+
 }
 
 
@@ -46,21 +57,25 @@ function onClickListener(){
     
     document.addEventListener("click", (e) => {
 
-        function toggleTimezonify(){    
+        function toggleTimezonify(){   
             setStorageValue("enabled", !enabled);
-            updateIndicator(!enabled)
+            enabled = !enabled;
+            // updateIndicator(!enabled)
+        }
+
+        function toggleAutoHighlight(){
+            setStorageValue("autoHighlight", !autoHighlight);
+            autoHighlight = !autoHighlight
+            // updateIndicator(!autoHighlight)
         }
 
         function reportError(error){
             console.error(`Could not timezonify: ${error}`);
         }
-
         if (e.target.classList.contains("toggle-timezonify-btn")){
-            
             toggleTimezonify();
-            // browser.tabs.query({active: true, currentWindow: true})
-            // .then(toggleTimezonify)
-            // .catch(reportError)
+        } else if (e.target.classList.contains("toggle-autoHighlight-btn")){
+            toggleAutoHighlight()
         }
     })
 }
@@ -71,9 +86,10 @@ function reportScriptError(error){
 
 
 (() => {
-    init();
+    init(); // init to be run everytime
+
     if(window.hasRun){
-        return
+        return;
     }
 
     browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
