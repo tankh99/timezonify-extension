@@ -1,8 +1,12 @@
 # timezonify-extension
-Makes all timings local. 
+Makes all timings local. Select the text you want to convert into your local timezone, and click on the Timezonify button that appears above the text. 
+
+You can also enable/disable the extension by clicking on the extension's popup.
 
 
 # Version History:
+
+v3.0: Feature: Added auto-highlighting, which can auto-highlight valid timing text. This will help make selections much easier. Also added toggle for auto-highlighting
 
 v2.1: Added a toggle feature to enable/disable timezonify highlighting. Added support for common timezones
 
