@@ -99,21 +99,24 @@ function getRangeParentNode(range){
 
 function createTimezonifyPopover(parentNode, rect, text){
   let button = document.createElement("button");
-  let textHeight = parseInt(window.getComputedStyle(parentNode).fontSize, 10)
+  let fontSize = parseInt(window.getComputedStyle(parentNode).fontSize, 10)
+  let padding = 4
   // let lineHeight = window.getComputedStyle(parentNode).lineHeight === "normal" ? textHeight * 1.2 : parseInt(window.getComputedStyle(parentNode).lineHeight, 10)
-  button.style.top = (rect.top > rect.height ? (rect.top - textHeight - 12) : (rect.top + rect.height)) + window.scrollY + "px";
+  button.style.top = (rect.top > rect.height ? (rect.top - fontSize - 12) : (rect.top + rect.height)) + window.scrollY + "px";
   button.style.left = rect.left + window.scrollX + "px"
   button.style.position = "absolute";
   button.style.backgroundColor = "rgba(0,0,0,0.7)";
+  
   button.style.color = "white";
   button.style.border = "none"
   button.style.borderRadius = 4 + "px"
   button.style.cursor = "pointer"
-  button.style.padding = 4 + "px"
+  button.style.padding = padding + "px"
   button.style.userSelect = "none"
   button.style.zIndex = 9999;
-  button.style.wordWrap = "break-word"
-  button.style.fontSize = parseInt(window.getComputedStyle(parentNode).fontSize, 10) + "px"
+  // button.style.whiteSpace = "nowrap"
+  button.style.wordBreak = "break-word"
+  button.style.fontSize = fontSize + "px"
 
   button.className = "timezonify-popover"
   button.innerText = "Timezonify";
@@ -122,6 +125,7 @@ function createTimezonifyPopover(parentNode, rect, text){
     try{
 
       const timezonified = timezonify(text);
+      console.log(timezonified)
       if(!timezonified){
           console.error("Not a valid time")
           button.innerText = "Not a valid time"
@@ -130,16 +134,33 @@ function createTimezonifyPopover(parentNode, rect, text){
           }, 1500)
           return;
       } 
+      padding = 3
+      // const clientTimezoneData = getClientTimezoneData();
+      const targetTimezone = "PT"
+      const clientTimezone = "MPST"
+      const lengthDiff = clientTimezone.length - targetTimezone.length > 0 ? clientTimezone.length - targetTimezone.length : 0
+      button.innerText = timezonified;
       button.classList.add("timezonify-time-popover")
+      button.style.color = "white"
+      button.style.backgroundColor = "black";
+      button.style.textAlign = "left"
       button.style.display = "flex"
       button.style.alignItems = "center"
       button.style.justifyContent = "center";
-      button.style.top = rect.top + window.scrollY + "px"
-      button.style.left = rect.left + window.scrollX + "px"
-      button.style.height = textHeight + "px";
-      button.style.width = "auto";
-      button.style.backgroundColor = "black";
-      button.innerText = timezonified;
+      button.style.padding = padding + "px";
+      button.style.top = rect.top + window.scrollY - padding + "px"
+      button.style.left = rect.left + window.scrollX - padding + "px"
+      button.style.minHeight = rect.height + padding * 2 + "px";
+
+      button.style.minWidth = rect.width + padding * 2 + "px";
+      button.style.fontSize = (fontSize) + "px"; //
+
+      // button.style.width = (fontSize <= 10 ? rect.width + fontSize: rect.width) + 1 / fontSize  * lengthDiff + "px";
+      // button.style.fontSize = (fontSize > 14 ? fontSize - padding : fontSize) + "px"; // to compensate for the box size
+      
+      // console.log(JSON.stringify(button.clientWidth))
+      // console.log(JSON.stringify(button.offsetWidth))
+      // console.log(JSON.stringify(button.scrollWidth))
     } catch (ex){
       console.error(ex)
       button.innerText = ex
@@ -171,6 +192,7 @@ function replaceTime(text){
           const convertedTime = convertTime(match)
           return convertedTime
       }
+      // return matches[0]
   }
 }
 
@@ -243,17 +265,15 @@ function convertTime(string){
     const { hour: cleanedSourceOffset, minute: sourceMinute } = cleanTimeOffset(
       sourceOffset
     );
-    // console.log(hour);
-    // console.log(cleanedSourceOffset);
-    // console.log(cleanedClientOffset);
+    
     hour = hour - cleanedSourceOffset + cleanedClientOffset;
     minute = minute - sourceMinute + clientMinute;
-    
   
     return formatTime(hour, minute, meridian, meridian == null);
   }
   
   function formatTime(hour, minute, meridian, is24hr) {
+
     if(is24hr){
   
       if (minute >= 60) {
@@ -276,6 +296,7 @@ function convertTime(string){
         hour = "0" + hour 
       }
   
+      if(hour > 24) return formatTime(hour, minute, meridian, is24hr)
       return {hour, minute, meridian: ""}
     }
   
@@ -295,6 +316,7 @@ function convertTime(string){
         hour = hour - 12;
         meridian = meridian ? (meridian.toLowerCase() === "am" ? "pm" : "am") : "";
     }
+    if(hour > 12) return formatTime(hour, minute, meridian, is24hr) // hour will be more than 12 even after minusing if its 11:00pm PT and your timezone is MPST/SGT
     return { hour, minute, meridian };
     
   }
@@ -347,6 +369,7 @@ document.onmouseup = async (e) => {
         const meridian = groups[4];
         const timezone = groups[7];
         const dynamicRegex = new RegExp(`(${hour}:${minute})|(${meridian})|(${timezone})`, "gm")
+        console.log(range)
         const nodes = iterateThroughNode(range.commonAncestorContainer, dynamicRegex)
     
         range = document.createRange();
@@ -369,15 +392,14 @@ document.onmouseup = async (e) => {
     // 1. user highlights the same text
     // 2. user clicks on the highlighted text
     if(!checkSameRange(prevRange, range)){ // if highlighted different text
+      
       if(prevRange !== null){  // user selected different text
-        // console.log("removing")
         removePopovers()
       } 
-      if(!sel.isCollapsed){
-        // console.log("adding")
+      if(!sel.isCollapsed ){
         addPopover(range)
       }
-    } else if (popovers.length >= 1){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
+    } else if (sel.type === "Caret"){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
       removePopovers()
     } else if (popovers.length < 1){
       addPopover(range)
