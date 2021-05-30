@@ -106,7 +106,7 @@ function reportScriptError(error){
     }
 
     // browser.tabs.executeScript({file: "/browser-polyfill.js"});
-    browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
+    // browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
     // .then(onClickListener)
     // .catch(reportScriptError)
     window.hasRun = true;
