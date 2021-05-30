@@ -12,9 +12,9 @@ function setStorageValue(key, value){
   browser.storage.sync.set({[key]: value})
 }
 
-async function getStorageValue(key){
+async function getStorageValue(key, cb){
   browser.storage.sync.get([key], (result) => {
-    return result[key]
+    return cb(result[key])
   });
 }
 
@@ -38,19 +38,23 @@ async function getStorageValue(key){
 
     
 async function init(){
-  const _enabled = await getStorageValue("enabled")
-  enabled = _enabled
-  if(enabled == null) {
-      enabled = true;
-      setStorageValue("enabled", true)
-  }
+  getStorageValue("enabled", (_enabled) => {
 
-  const _autoHighlight = await getStorageValue("autoHighlight");
-  autoHighlight = _autoHighlight;
-  if(_autoHighlight == null){
-      setStorageValue("autoHighlight", true);
-      autoHighlight = true;
-  }
+    enabled = _enabled
+    if(enabled == null) {
+        enabled = true;
+        setStorageValue("enabled", true)
+
+    }
+  })
+  getStorageValue("autoHighlight", (_autoHighlight) => {
+
+    autoHighlight = _autoHighlight;
+    if(_autoHighlight == null){
+        setStorageValue("autoHighlight", true);
+        autoHighlight = true;
+    }
+  });
 }
 
 var _timezones = []
@@ -131,12 +135,12 @@ function createTimezonifyPopover(parentNode, rect, text){
     try{
 
       const timezonified = timezonify(text);
-      console.log(timezonified)
       if(!timezonified){
           console.error("Not a valid time")
           button.innerText = "Not a valid time"
           setTimeout(() => {
-              e.target.parentNode.removeChild(e.target)
+            if(e.target.parentNode) e.target.parentNode.removeChild(e.target)
+
           }, 1500)
           return;
       } 
@@ -375,7 +379,6 @@ document.onmouseup = async (e) => {
         const meridian = groups[4];
         const timezone = groups[7];
         const dynamicRegex = new RegExp(`(${hour}:${minute})|(${meridian})|(${timezone})`, "gm")
-        console.log(range)
         const nodes = iterateThroughNode(range.commonAncestorContainer, dynamicRegex)
     
         range = document.createRange();

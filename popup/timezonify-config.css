@@ -9,8 +9,9 @@
 
 #popup-title{
     margin: 0;
-    line-height: 2rem;
+    line-height: 2em;
     font-weight: normal;
+    font-size: 1.5em;
 }
 
 .text-indicator{

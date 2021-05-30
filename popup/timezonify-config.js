@@ -9,14 +9,15 @@ window.browser = (function () {
       window.chrome;
   })();
 
+
 function setStorageValue(key, value){
-    browser.storage.sync.set({[key]: value})
+browser.storage.sync.set({[key]: value})
 }
 
-async function getStorageValue(key){
-  browser.storage.sync.get([key], (result) => {
-    return result[key]
-  });
+async function getStorageValue(key, cb){
+    browser.storage.sync.get([key], (result) => {
+        return cb(result[key])
+    });
 }
 
 function getCurrentTab(){
@@ -28,12 +29,16 @@ var autoHighlight;
 var storage;
 
 async function init(){
-    const _enabled = await getStorageValue("enabled")
-    const _autoHighlight = await getStorageValue("autoHighlight");
-    enabled = _enabled
-    updateIndicator("enabled", _enabled)
-    autoHighlight = _autoHighlight;
-    updateIndicator("autoHighlight", _autoHighlight)
+    getStorageValue("enabled", (_enabled) => {
+        enabled = _enabled
+        updateIndicator("enabled", _enabled)
+    })
+
+
+    getStorageValue("autoHighlight", (_autoHighlight) => {
+        autoHighlight = _autoHighlight;
+        updateIndicator("autoHighlight", _autoHighlight)
+    })
 
 
 }
@@ -60,7 +65,7 @@ function updateIndicator(key, value){
 }
 
 
-function onClickListener(){
+// function onClickListener(){
     
     document.addEventListener("click", (e) => {
 
@@ -79,13 +84,14 @@ function onClickListener(){
         function reportError(error){
             console.error(`Could not timezonify: ${error}`);
         }
+        
         if (e.target.classList.contains("toggle-timezonify-btn")){
             toggleTimezonify();
         } else if (e.target.classList.contains("toggle-autoHighlight-btn")){
             toggleAutoHighlight()
         }
     })
-}
+// } 
 
 function reportScriptError(error){
     console.error(`Failed to execute timezonify content script: ${error.message}`);
@@ -95,14 +101,14 @@ function reportScriptError(error){
 (() => {
     init(); // init to be run everytime
 
-    // if(window.hasRun){
-    //     return;
-    // }
+    if(window.hasRun){
+        return;
+    }
 
     // browser.tabs.executeScript({file: "/browser-polyfill.js"});
-    // browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
+    browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
     // .then(onClickListener)
     // .catch(reportScriptError)
-    // window.hasRun = true;
+    window.hasRun = true;
 })()
 
