@@ -67,30 +67,6 @@ function updateIndicator(key, value){
 
 // function onClickListener(){
     
-    document.addEventListener("click", (e) => {
-
-        function toggleTimezonify(){   
-            setStorageValue("enabled", !enabled);
-            enabled = !enabled;
-            // updateIndicator(!enabled)
-        }
-
-        function toggleAutoHighlight(){
-            setStorageValue("autoHighlight", !autoHighlight);
-            autoHighlight = !autoHighlight
-            // updateIndicator(!autoHighlight)
-        }
-
-        function reportError(error){
-            console.error(`Could not timezonify: ${error}`);
-        }
-        
-        if (e.target.classList.contains("toggle-timezonify-btn")){
-            toggleTimezonify();
-        } else if (e.target.classList.contains("toggle-autoHighlight-btn")){
-            toggleAutoHighlight()
-        }
-    })
 // } 
 
 function reportScriptError(error){
@@ -105,6 +81,26 @@ function reportScriptError(error){
         return;
     }
 
+    document.addEventListener("click", (e) => {
+
+        function toggleTimezonify(){   
+            setStorageValue("enabled", !enabled);
+            enabled = !enabled;
+            // updateIndicator(!enabled)
+        }
+
+        function toggleAutoHighlight(){
+            setStorageValue("autoHighlight", !autoHighlight);
+            autoHighlight = !autoHighlight
+            // updateIndicator(!autoHighlight)
+        }
+        
+        if (e.target.classList.contains("toggle-timezonify-btn")){
+            toggleTimezonify();
+        } else if (e.target.classList.contains("toggle-autoHighlight-btn")){
+            toggleAutoHighlight()
+        }
+    })
     // browser.tabs.executeScript({file: "/browser-polyfill.js"});
     // browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
     // .then(onClickListener)
