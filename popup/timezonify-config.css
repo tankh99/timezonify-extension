@@ -9,7 +9,8 @@
 
 #popup-title{
     margin: 0;
-    line-height: 2rem;
+    line-height: 2em;
+    font-size: 1.5em;
     font-weight: normal;
 }
 

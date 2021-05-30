@@ -125,12 +125,11 @@ function createTimezonifyPopover(parentNode, rect, text){
     try{
 
       const timezonified = timezonify(text);
-      console.log(timezonified)
       if(!timezonified){
           console.error("Not a valid time")
           button.innerText = "Not a valid time"
           setTimeout(() => {
-              e.target.parentNode.removeChild(e.target)
+            if(e.target.parentNode) e.target.parentNode.removeChild(e.target)
           }, 1500)
           return;
       } 
@@ -355,11 +354,11 @@ document.onmouseup = async (e) => {
     _timezones = await fetchTimezonesData();
 
     const sel = document.getSelection();
+    if(sel.isCollapsed) return removePopovers();
+
     let range = sel.getRangeAt(0)
-    // var regex = /(?<!\S)((1[0-2]|0?[0-9]):([0-5]?[0-9]?)([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s?([A-Z]{2,4})/gm
     const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
     if(autoHighlight && range.toString().match(regex)){
-      // console.log(range.toString());
       let matches = [...range.toString().matchAll(regex)]
       const groups = matches[0];
       sel.removeAllRanges()
@@ -369,7 +368,6 @@ document.onmouseup = async (e) => {
         const meridian = groups[4];
         const timezone = groups[7];
         const dynamicRegex = new RegExp(`(${hour}:${minute})|(${meridian})|(${timezone})`, "gm")
-        console.log(range)
         const nodes = iterateThroughNode(range.commonAncestorContainer, dynamicRegex)
     
         range = document.createRange();
