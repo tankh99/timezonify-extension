@@ -3,13 +3,20 @@
 // const src = browser.runtime.getURL("data/storage.js");
 // const storage = await import(src);
 
+window.browser = (function () {
+    return window.msBrowser ||
+      window.browser ||
+      window.chrome;
+  })();
+
 function setStorageValue(key, value){
     browser.storage.sync.set({[key]: value})
 }
 
 async function getStorageValue(key){
-    var gettingValue = await browser.storage.sync.get([key]);
-    return gettingValue && gettingValue[key]
+  browser.storage.sync.get([key], (result) => {
+    return result[key]
+  });
 }
 
 function getCurrentTab(){
@@ -88,13 +95,14 @@ function reportScriptError(error){
 (() => {
     init(); // init to be run everytime
 
-    if(window.hasRun){
-        return;
-    }
+    // if(window.hasRun){
+    //     return;
+    // }
 
-    browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
-    .then(onClickListener)
-    .catch(reportScriptError)
-    window.hasRun = true;
+    // browser.tabs.executeScript({file: "/browser-polyfill.js"});
+    // browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
+    // .then(onClickListener)
+    // .catch(reportScriptError)
+    // window.hasRun = true;
 })()
 

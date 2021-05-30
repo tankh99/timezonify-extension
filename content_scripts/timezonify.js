@@ -2,14 +2,20 @@ var enabled;
 var autoHighlight;
 var regex = /\s?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s+([A-Z]{2,4})/gm
 
+window.browser = (function () {
+  return window.msBrowser ||
+    window.browser ||
+    window.chrome;
+})();
 
 function setStorageValue(key, value){
   browser.storage.sync.set({[key]: value})
 }
 
 async function getStorageValue(key){
-  var gettingValue = await browser.storage.sync.get([key]);
-  return gettingValue && gettingValue[key]
+  browser.storage.sync.get([key], (result) => {
+    return result[key]
+  });
 }
 
 (() => {
