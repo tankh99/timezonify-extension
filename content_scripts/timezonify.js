@@ -354,6 +354,7 @@ document.onmouseup = async (e) => {
     _timezones = await fetchTimezonesData();
 
     const sel = document.getSelection();
+    let autoHighlightFound = false;
     if(sel.isCollapsed) return removePopovers();
 
     let range = sel.getRangeAt(0)
@@ -380,6 +381,7 @@ document.onmouseup = async (e) => {
             }
             if(startFound && node.value.trim() === timezone){
                 range.setEnd(node.node, node.index + node.value.length)
+                autoHighlightFound = true;
                 break;
             }
         }
@@ -389,18 +391,20 @@ document.onmouseup = async (e) => {
     // 2 scenarios
     // 1. user highlights the same text
     // 2. user clicks on the highlighted text
-    if(!checkSameRange(prevRange, range)){ // if highlighted different text
+    if(autoHighlight && autoHighlightFound){
+      if(!checkSameRange(prevRange, range)){ // if highlighted different text
       
-      if(prevRange !== null){  // user selected different text
+        if(prevRange !== null){  // user selected different text
+          removePopovers()
+        } 
+        if(!sel.isCollapsed){
+          addPopover(range)
+        }
+      } else if (sel.type === "Caret"){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
         removePopovers()
-      } 
-      if(!sel.isCollapsed ){
+      } else if (popovers.length < 1){
         addPopover(range)
       }
-    } else if (sel.type === "Caret"){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
-      removePopovers()
-    } else if (popovers.length < 1){
-      addPopover(range)
     }
   } else {
     removePopovers()
