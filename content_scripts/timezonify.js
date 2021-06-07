@@ -369,6 +369,7 @@ document.onmouseup = async (e) => {
     
     let range = sel.getRangeAt(0)
     const popovers = document.querySelectorAll(".timezonify-popover:not(.timezonify-time-popover)");
+    let autoHighlightFound = false;
     if(autoHighlight && range.toString().match(regex)){
       // console.log(range.toString());
       let matches = [...range.toString().matchAll(regex)]
@@ -392,6 +393,7 @@ document.onmouseup = async (e) => {
             }
             if(startFound && node.value.trim() === timezone){
                 range.setEnd(node.node, node.index + node.value.length)
+                autoHighlightFound = true;
                 break;
             }
         }
@@ -406,7 +408,7 @@ document.onmouseup = async (e) => {
       if(prevRange !== null){  // user selected different text
         removePopovers()
       } 
-      if(!sel.isCollapsed ){
+      if(!sel.isCollapsed && (autoHighlight && autoHighlightFound)){
         addPopover(range)
       }
     } else if (sel.type === "Caret"){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
