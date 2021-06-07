@@ -391,21 +391,21 @@ document.onmouseup = async (e) => {
     // 2 scenarios
     // 1. user highlights the same text
     // 2. user clicks on the highlighted text
-    if(autoHighlight && autoHighlightFound){
+    
       if(!checkSameRange(prevRange, range)){ // if highlighted different text
       
         if(prevRange !== null){  // user selected different text
           removePopovers()
         } 
-        if(!sel.isCollapsed){
+        if(!sel.isCollapsed && autoHighlight && autoHighlightFound){
           addPopover(range)
         }
-      } else if (sel.type === "Caret"){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
+      } 
+      else if (sel.type === "Caret"){ // current problem with these else if statements is that when user highlights the same text again, it will remove the timezonify popup
         removePopovers()
       } else if (popovers.length < 1){
         addPopover(range)
       }
-    }
   } else {
     removePopovers()
   }
