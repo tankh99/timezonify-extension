@@ -10,21 +10,47 @@
 
 <body>
   <div id="main-content">
-    <img class="logo" src="../icons/timezonify-logo-128.png" alt="timezonify-logo"/>
-    <p id="popup-title">Timezonify</p>
-    <div class="options">
-      <label class="form-switch">
-        <p id="enabled-indicator" class="text-indicator">Enabled</p>
-        <input type="checkbox" class="toggle-btn toggle-timezonify-btn" data-type="enabled"/>
-        <i></i>
-      </label>
-      <label class="form-switch">
-        <p id="autoHighlight-indicator" class="text-indicator">Auto-Highlight</p>
-        <input type="checkbox" class="toggle-btn toggle-autoHighlight-btn" data-type="autoHighlight"/>
-        <i></i>
-      </label>
+    <div class="header">
+      <img class="logo" src="../icons/timezonify-logo-128.png" alt="timezonify-logo"/>
+      <p id="popup-title">Timezonify</p>
+      <button class="timezonify-btn">Timezonify</button>
+      <button class="undo-timezonify-btn hide">Undo Timezonify</button>
+      <p>Your timezone: <b id="local-timezone"></b></p>
     </div>
-  </div>
-  <script src="timezonify-config.js"></script>
+    <div class="tab-group">
+      <div data-id="timezone-converter" class="tab active-tab">Converter</div>
+      <div data-id="options" class="tab">Options</div>
+    </div>
+    <div class="tab-content-group">
+      <!-- TImezone Converter -->
+      <div id="timezone-converter" class="tab-content timezone-converter">
+        <div>
+          <label for="hour">Hour:</label><br/>
+          <input id="hour-input" type="text" name="hour"/>
+        </div>
+        <div>
+          <label for="timezone">Timezone:</label><br/>
+          <select id="timezone-select" name="timezone"></select>
+        </div>
+        <button type="button" class="convert-btn">Convert</button>
+        <span id="converted-result"></span>
+      </div>
+      <!-- Options -->
+      <div id="options" class="tab-content hide">
+        <label class="form-switch">
+          <p id="enabled-indicator" class="text-indicator">Enabled</p>
+          <input type="checkbox" class="toggle-btn toggle-timezonify-btn" data-type="enabled"/>
+          <i></i>
+        </label>
+        <label class="form-switch">
+          <p id="autoHighlight-indicator" class="text-indicator">Auto-Highlight</p>
+          <input type="checkbox" class="toggle-btn toggle-autoHighlight-btn" data-type="autoHighlight"/>
+          <i></i>
+        </label>
+      </div>
+    </div>
+    </div>
+    <script type="module" src="/utils/utils.js"></script>
+    <script src="timezonify-config.js"></script>
 </body>
 </html>

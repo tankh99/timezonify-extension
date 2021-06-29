@@ -1,11 +1,17 @@
-#main-content{
+body {
+  margin: 0;
+  font-family:Verdana, Geneva, Tahoma, sans-serif;
+  min-width: 100px;
+}
+
+.header{
     display: flex;
     flex-direction: column;
     align-items: center;
     overflow: hidden;
-    min-width: 120px;
-    font-family:Verdana, Geneva, Tahoma, sans-serif;
+    padding: 12px;
 }
+
 
 #popup-title{
     margin: 0;
@@ -21,6 +27,15 @@
 .logo{
     max-width: 64px;
 }
+
+.show {
+  display: block;
+}
+
+.hide{
+  display: none;
+}
+
 
 .options{
     font-size: 0.8em;
@@ -98,3 +113,35 @@
   .form-switch input:checked + i::before { transform: translate3d(18px, 2px, 0) scale3d(0, 0, 0); }
   
   .form-switch input:checked + i::after { transform: translate3d(22px, 2px, 0); }
+
+  /* Tabs */
+  .tab-group{
+    display: flex;
+  }
+
+  .tab {
+    padding: 4px 8px;
+    cursor:pointer;
+    background: rgba(255, 255, 0, 0.1);
+    transition: 0.4s;
+  }
+
+  .tab:hover{
+    background: rgba(255, 255, 0, 0.6);
+  }
+
+  .active-tab{
+    background: rgba(255, 255, 0, 0.5);
+  }
+  .tab-content-group{
+    padding: 12px;
+  }
+
+  .tab-group{
+    
+  }
+  .tab-group, .tab-content-group{
+    font-size: 0.75em;
+
+  }
+

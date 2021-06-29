@@ -1,7 +1,8 @@
 var enabled;
 var autoHighlight;
-var regex = /\s?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)\s?([AaPp][Mm])|(2[0-3]|[0-1][0-9]):?([0-5][0-9]))\s+([A-Z]{2,4})/gm
-
+var regex = /(<.*>)?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)(<\/.*>)?\s?(<.*>)?([AaPp][Mm])(<\/.*>)?|(<.*>)?(2[0-3]|[0-1][0-9]):?([0-5][0-9])(<\/.*>)?)\s+(<.*>)?([A-Z]{2,4})(<\/.*>)?/gm
+var utils;
+var oldHtml;
 
 function setStorageValue(key, value){
   browser.storage.sync.set({[key]: value})
@@ -12,46 +13,23 @@ async function getStorageValue(key){
   return gettingValue && gettingValue[key]
 }
 
-(() => {
-    if(window.hasRun){
-        return;
-    }
-    browser.storage.onChanged.addListener((storage) => {
-      enabled = storage.enabled != null ? storage.enabled.newValue : enabled
-      autoHighlight = storage.autoHighlight != null ? storage.autoHighlight.newValue : autoHighlight
-      document.querySelectorAll(".timezonify-time-popover").forEach((item) => {
-          if(enabled) item.style.display = "flex"
-          else item.style.display = "none"
-      })
+async function importScripts(){ // so far only imports 1 script: utils.js (helps out with code reusability)
+  return new Promise((resolve) => {
+    import(browser.runtime.getURL("utils/utils.js"))
+    .then((module) => {
+      utils = module;
+      console.log(utils.test)
+      resolve()
     })
-
-    init();
-
-    window.hasRun = true;
-})()
-
-    
-async function init(){
-  const _enabled = await getStorageValue("enabled")
-  enabled = _enabled
-  if(enabled == null) {
-      enabled = true;
-      setStorageValue("enabled", true)
-  }
-
-  const _autoHighlight = await getStorageValue("autoHighlight");
-  autoHighlight = _autoHighlight;
-  if(_autoHighlight == null){
-      setStorageValue("autoHighlight", true);
-      autoHighlight = true;
-  }
+  })
 }
+
+
 
 var _timezones = []
 function timezonifyReceiver(request, sender, sendResponse){
-    const {timezones} = request;
-    _timezones = timezones
-    // timezonify();
+    // const {timezones} = request;
+    // _timezones = timezones
 }
 
 var prevRange = null;
@@ -72,7 +50,7 @@ function addPopover(range){
 
 
 async function fetchTimezonesData(){
-  const dataUrl = browser.runtime.getURL("/data/timezones.json");
+  const dataUrl = browser.runtime.getURL("data/timezones.json");
   const timezones = await(await fetch(dataUrl)).json()
   return timezones
 }
@@ -185,23 +163,18 @@ function timezonify(text){
 
 function replaceTime(text){
   const matches = text.match(regex)
-  
   if(matches){
-      for(let match of matches){
-          const convertedTime = convertTime(match)
-          return convertedTime
-      }
-      // return matches[0]
+    const groups = regex.exec(text)
+    const convertedTime = convertTime(groups)
+    return convertedTime;
   }
 }
 
-function convertTime(string){
-
-  const groups = regex.exec(string);
-  const hour = groups[2] ?? groups[5];
-  const minute = groups[3] ?? groups[6];
-  const meridian = groups[4];
-  const timezone = groups[7];
+function convertTime(groups){
+  const hour = groups[3] ?? groups[10];
+  const minute = groups[4] ?? groups[11];
+  const meridian = groups[7]
+  const timezone = groups[14];
   const sourceTimezoneData = findTimezoneDataFromTimezone(timezone);
   const clientTimezoneData = getClientTimezoneData();
   
@@ -351,8 +324,6 @@ function convertTime(string){
 document.onmouseup = async (e) => {
   if(enabled){
     if(e.target.classList.contains("timezonify-popover")) return;
-    _timezones = await fetchTimezonesData();
-
     const sel = document.getSelection();
     let autoHighlightFound = false;
     if(sel.isCollapsed) return removePopovers();
@@ -411,4 +382,101 @@ document.onmouseup = async (e) => {
   }
 }
 
-browser.runtime.onMessage.addListener(timezonifyReceiver)
+// helper code
+
+function getNodes() {
+  let walker = document.createTreeWalker(document, window.NodeFilter.SHOW_TEXT, null, false);
+  let nodes = [];
+  while(node = walker.nextNode()) {
+    nodes.push(node);
+  }
+  return nodes;
+}
+
+
+
+async function init(){
+  const _enabled = await utils.getStorageValue("enabled")
+  
+  enabled = _enabled
+  if(enabled == null) {
+      enabled = true;
+      utils.setStorageValue("enabled", true)
+  }
+
+  const _autoHighlight = await utils.getStorageValue("autoHighlight");
+  autoHighlight = _autoHighlight;
+  if(_autoHighlight == null){
+      utils.setStorageValue("autoHighlight", true);
+      autoHighlight = true;
+  }
+
+  _timezones = await fetchTimezonesData();
+}
+
+
+(async() => {
+  document.body.innerText
+  if(window.hasRun){
+      return;
+  }
+  await importScripts();
+  init();
+  
+
+  // whenever the user updates the configurations in the popup, update them here as well, removing any existing popups if user disables the extension
+  browser.storage.onChanged.addListener((storage) => {
+    enabled = storage.enabled != null ? storage.enabled.newValue : enabled
+    autoHighlight = storage.autoHighlight != null ? storage.autoHighlight.newValue : autoHighlight
+    document.querySelectorAll(".timezonify-time-popover").forEach((item) => {
+        if(enabled) item.style.display = "flex"
+        else item.style.display = "none"
+
+    })
+  })
+
+
+  window.hasRun = true;
+})()
+
+    
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if(message.command === "timezonify"){
+    const oldHtml = document.body.innerHTML
+    const timezonifiedHtml = timezonifyAll(document.body.innerHTML);
+    sendResponse({timezonifiedHtml, oldHtml})
+  } else if (message.command === "undo-timezonify"){
+    undoTimezonifyAll(message.tabId);
+  }
+  else if(message.command == "find-timezone"){
+    const timezoneData = findTimezoneDataFromTimezoneUtc(message.data)
+    sendResponse(timezoneData)
+  }
+})
+
+function undoTimezonifyAll(tabId){
+    browser.runtime.sendMessage({
+      command: "get-state",
+      tabId: tabId
+    }).then(res => {
+      document.body.innerHTML = res.oldHtml
+    })
+}
+
+function timezonifyAll(text){
+  oldHtml = text;
+  while((groups = regex.exec(text)) != null){
+    const timezonified = convertTime(groups) 
+    text = text.replace(`${groups[2]} ${groups[14]}`, timezonified)
+    
+  }
+  document.body.innerHTML = text;
+  return text
+}
+
+// detect for page refresh, and ask background.js to clear its states cache
+if(performance.navigation.type === 1){
+  browser.runtime.sendMessage({
+    command: "refresh"
+  })
+}

@@ -169,7 +169,8 @@
         "America/Resolute",
         "America/Winnipeg",
         "CST6CDT"
-      ]
+      ],
+      "aliases": ["CST"]
     },
     {
       "value": "Central Standard Time (Mexico)",
@@ -1146,7 +1147,7 @@
     },
     {
       "value": "Singapore Standard Time",
-      "abbr": "MPST",
+      "abbr": "SGT",
       "offset": 8,
       "isdst": false,
       "text": "(UTC+08:00) Kuala Lumpur, Singapore",

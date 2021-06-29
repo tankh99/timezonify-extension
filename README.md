@@ -3,6 +3,13 @@ Makes all timings local. Select the text you want to convert into your local tim
 
 You can also enable/disable the extension by clicking on the extension's popup.
 
+TODO:
+
+1. Complete the convert timezone form inside the popup
+2. Figure out a way to reuse the same code for both content_scripts and popups
+3. Separate the current options from the popup page and put it inside a separate options page (hint: define "options_ui" inside manifest.json).
+4. Add country name fields to major timezones
+5. Update to manifest v3
 
 # Version History:
 
