@@ -12,6 +12,9 @@ body {
     padding: 12px;
 }
 
+.error{
+  color: red;
+}
 
 #popup-title{
     margin: 0;
@@ -145,3 +148,11 @@ body {
 
   }
 
+
+  .input-group{
+    margin-bottom: 8px;
+  }
+
+  .time-input{
+    width: 100%
+  }

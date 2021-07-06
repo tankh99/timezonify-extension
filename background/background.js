@@ -1,8 +1,8 @@
 var states = {}
 
 browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if(request.command === "save-state"){
-        if(!request.undo) {
+    if(request.command === "set-state"){
+        if(!request.state.undo) {
             states[request.tabId] = {
                 ...states[request.tabId],
                 ...request.state
@@ -14,9 +14,6 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse(states[request.tabId])
     } else if (request.command === "refresh"){
         states = {};
-    }
+    } 
 })
 
-function saveState(state){
-
-}

@@ -4,6 +4,7 @@
 // const storage = await import(src);
 var timezones;
 var activeTab = ""
+var clientTimezone;
 var utils;
 // config values
 var enabled; 
@@ -29,6 +30,7 @@ async function init(){
     updateClientTimezone();
     populateTimezoneSelect()
     updateTimezonifyButton();
+    // document.querySelector("#timezone-select").select2();
 }
 
 async function updateTimezonifyButton(){
@@ -70,18 +72,28 @@ async function fetchTimezones(){
     timezones = _timezones;
 }
 
+
 async function updateClientTimezone(){
-    let localTimezoneHtml = document.querySelector("#local-timezone");
-    const utc = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    let localTimezone = await findTimezoneDataFromTimezoneUtc(utc)
+    utils.getState()
+    .then(async(state) => {
+        console.log(state);
+        let localTimezoneHtml = document.querySelector("#local-timezone");
+        let localTimezone = state ? state.clientTimezone : null;
+        if(!state || !state.clientTimezone){
+            const utc = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            localTimezone = await findTimezoneDataFromTimezoneUtc(utc)
+            utils.setState({clientTimezone: localTimezone})
+        }
+        localTimezoneHtml.innerText = localTimezone.abbr;
+        clientTimezone = localTimezone
+    })
     
-    localTimezoneHtml.innerText = localTimezone.abbr;
 }
 
 function populateTimezoneSelect(){
     const timezoneDropdown = document.querySelector("#timezone-select");
     for(let timezone of timezones){
-        timezoneDropdown.appendChild(new Option(timezone.text))
+        timezoneDropdown.appendChild(new Option(`${timezone.value} (${timezone.abbr})`, timezone.offset))
     }
 }
 
@@ -95,7 +107,7 @@ async function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
                 command: "find-timezone",
                 data: timezoneUtc
             }, function(response) {
-                resolve(response);
+                return resolve(response);
             })
         })
     })
@@ -120,10 +132,9 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
     utils.getBrowserTabs()
     .then((tabs) => {
         const state = {
-            command: "save-state",
-            state: {oldHtml},
-            tabId: tabs[0].id,
-            undo: !isTimezonified
+            command: "set-state",
+            state: {oldHtml, undo: !isTimezonified},
+            tabId: tabs[0].id
         }
         browser.runtime.sendMessage(state)
     })
@@ -139,13 +150,18 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
     }
 }
 
+
 (async() => {
-    if(!window.hasRun) await init(); // run first before anything else, but only once
+    await init(); // run first before anything else, but only once
     updateConfigIndicators(); // to be run everytime
 
-    if(window.hasRun){
-        return;
-    }
+    document.querySelector("#time-input").addEventListener("onchange", (e) => {
+        console.log(e.target.value)
+    })
+    
+    document.querySelector("#timezone-select").addEventListener("change", (e) => {
+        console.log(e.target.value)
+    })
     
     document.addEventListener("click", (e) => {
         function toggleTimezonifyConfig(){   
@@ -160,7 +176,6 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
             // updateIndicator(!autoHighlight)
         }
         if(e.target.classList.contains("timezonify-btn")){
-            
             utils.getBrowserTabs()
             .then((tabs) => {
                 browser.tabs.sendMessage(tabs[0].id, {
@@ -176,7 +191,6 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
                     command: "undo-timezonify",
                     tabId: tabs[0].id
                 }, () => {
-
                     toggleTimezonifyButtonDisplay(false)
                 })
             })
@@ -202,10 +216,32 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
                 }
             }
         } else if (e.target.classList.contains("convert-btn")){
-            console.log("Triggering convert")
-            const hour = document.querySelector("#hour-input").value;
-            const timezone = document.querySelector("#timezone-select").value;
-            console.log(hour);
+            const time = document.querySelector("#time-input").value; // returns 24hr value
+            const result = document.querySelector("#converted-result")
+            if(time){
+                const offset = document.querySelector("#timezone-select").value;
+                let hour = parseInt(time.split(":")[0])
+                let minute = parseInt(time.split(":")[1])
+                let meridian = "am";
+                if(hour >= 12){ // convert to 12-hour format
+                    meridian = "pm";
+                    hour -= 12
+                }
+                const {hour: hourOffset, minute: minuteOffset} = utils.cleanTimeOffset(offset)
+                const {hour: clientHourOffset, minute: clientMinuteOffset} = utils.cleanTimeOffset(clientTimezone.offset)
+                hour = hour - hourOffset + clientHourOffset;
+                minute = minute - minuteOffset + clientMinuteOffset;
+                let {hour:formattedHour, minute: formattedMinute, meridian:formattedMeridian} = utils.formatTime(hour, minute, meridian)
+                if(formattedHour < 0){
+                    formattedHour *= -1;
+                    formattedMeridian = formattedMeridian == "am" ? "pm" : "am";
+                } 
+                result.innerText = `${formattedHour}:${formattedMinute}${formattedMeridian}`
+            } 
+            // {
+                // result.innerHtml = `<span class="error">Time is invalid</span>` // innerHTML doesn't work!
+                // result.innerText = "Time is invalid"
+            // }
         }
     })
 
@@ -214,7 +250,3 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
     // .catch(reportScriptError)
     window.hasRun = true;
 })()
-
-browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-
-})

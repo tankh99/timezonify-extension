@@ -1261,6 +1261,20 @@
       ]
     },
     {
+      "value": "Indochina Time",
+      "abbr": "ICT",
+      "offset": 7,
+      "isdst": false,
+      "text": "(UTC+10:00) Brisbane",
+      "utc": [
+        "Asia/Cambodia",
+        "Asia/Laos",
+        "Asia/Thailand",
+        "Asia/Vietnam"
+      ]
+      
+    },
+    {
       "value": "AUS Eastern Standard Time",
       "abbr": "AEST",
       "offset": 10,

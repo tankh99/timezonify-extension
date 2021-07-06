@@ -4,8 +4,6 @@
   <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="timezonify-config.css"/>
-    <!-- <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet"> -->
-    
   </head>
 
 <body>
@@ -24,13 +22,13 @@
     <div class="tab-content-group">
       <!-- TImezone Converter -->
       <div id="timezone-converter" class="tab-content timezone-converter">
-        <div>
-          <label for="hour">Hour:</label><br/>
-          <input id="hour-input" type="text" name="hour"/>
+        <div class="input-group">
+          <label for="time-input">Time:</label><br/>
+          <input id="time-input" type="time" name="time"/>
         </div>
-        <div>
-          <label for="timezone">Timezone:</label><br/>
-          <select id="timezone-select" name="timezone"></select>
+        <div class="input-group">
+          <label for="timezone-select">Timezone:</label><br/>
+          <select id="timezone-select" name="timezone" placeholder="Timezone"></select>
         </div>
         <button type="button" class="convert-btn">Convert</button>
         <span id="converted-result"></span>
