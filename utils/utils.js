@@ -1,4 +1,5 @@
-export var test = "Testing"
+// import "../browser-polyfill";
+
 export const setStorageValue = (key, value) => {
     browser.storage.sync.set({[key]: value})
 }
@@ -11,8 +12,8 @@ export const getStorageValue = async(key) => {
 
 export const getBrowserTabs = async () => {
   return new Promise((resolve) => {
-
-    browser.tabs.query({active: true, currentWindow: true}, (tabs) => {
+    browser.tabs.query({active: true, currentWindow: true})
+    .then((tabs) => {
       resolve(tabs);
     })
   })
@@ -20,7 +21,8 @@ export const getBrowserTabs = async () => {
 export const getState = async () => {
   return new Promise((resolve) => {
     getBrowserTabs()
-    .then(tabs => {
+    .then((tabs) => {
+
       browser.runtime.sendMessage({
         command: "get-state",
         tabId: tabs[0].id
@@ -34,7 +36,7 @@ export const getState = async () => {
 export const setState = async (state) => {
   return new Promise((resolve) => {
     getBrowserTabs()
-    .then(tabs => {
+    .then((tabs) => {
       browser.runtime.sendMessage({
         command: "set-state",
         state,
@@ -95,7 +97,6 @@ export const formatTime = (hour, minute, meridian, is24hr) => {
   if (hour > 12) {
     console.log(hour)
       hour = hour - 12;
-      console.log(hour)
       meridian = meridian ? (meridian.toLowerCase() === "am" ? "pm" : "am") : "";
   }
 

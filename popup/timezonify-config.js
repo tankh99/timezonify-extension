@@ -11,43 +11,28 @@ var enabled;
 var autoHighlight;
 var storage;
 
-// function setStorageValue(key, value){
-//     browser.storage.sync.set({[key]: value})
-// }
-
-// async function getStorageValue(key){
-//     var gettingValue = await browser.storage.sync.get([key]);
-//     return gettingValue && gettingValue[key]
-// }
-
-function getCurrentTab(){
-    return browser.tabs.query({active: true, currentWindow: true})
-}
-
 async function init(){
     await importScripts();
     await fetchTimezones();
     updateClientTimezone();
     populateTimezoneSelect()
     updateTimezonifyButton();
-    // document.querySelector("#timezone-select").select2();
+    updateFormValues();
+    initialized = true;
+    // document.querySelector("#timezone-select").select2(); // doesn't work because web extension doesn't support importing of external libraries?!
 }
 
-async function updateTimezonifyButton(){
-    utils.getBrowserTabs()
-    .then(tabs => {
-        browser.runtime.sendMessage({
-            command: "get-state",
-            tabId: tabs[0].id
-        }).then((res) => {
-            if(res) {
-                console.log("Hydrating state")
-                toggleTimezonifyButtonDisplay(true, res.oldHtml)
-                
-            }
-        })
+var lastLoadValue = 0;
 
+async function updateTimezonifyButton(){
+    utils.getState()
+    .then((state) => {
+        if(state) {
+            toggleTimezonifyButtonDisplay(state.oldHtml != null, state.oldHtml)
+        }
     })
+
+    
 }
 
 async function updateConfigIndicators(){
@@ -72,11 +57,9 @@ async function fetchTimezones(){
     timezones = _timezones;
 }
 
-
 async function updateClientTimezone(){
     utils.getState()
     .then(async(state) => {
-        console.log(state);
         let localTimezoneHtml = document.querySelector("#local-timezone");
         let localTimezone = state ? state.clientTimezone : null;
         if(!state || !state.clientTimezone){
@@ -93,7 +76,7 @@ async function updateClientTimezone(){
 function populateTimezoneSelect(){
     const timezoneDropdown = document.querySelector("#timezone-select");
     for(let timezone of timezones){
-        timezoneDropdown.appendChild(new Option(`${timezone.value} (${timezone.abbr})`, timezone.offset))
+        timezoneDropdown.appendChild(new Option(`${timezone.value} (${timezone.abbr})`, `${timezone.offset}/${timezone.abbr}`))
     }
 }
 
@@ -106,16 +89,13 @@ async function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
             browser.tabs.sendMessage(tabs[0].id, {
                 command: "find-timezone",
                 data: timezoneUtc
-            }, function(response) {
+            }).then((response) => {
                 return resolve(response);
             })
         })
     })
   }
 
-function convertTimezone(){
-    console.log("converting!")
-}
 
 function updateConfigSwitch(key, value){
     const toggles = document.querySelectorAll(".toggle-btn");
@@ -128,15 +108,9 @@ function updateConfigSwitch(key, value){
 }
 
 async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
-    
-    utils.getBrowserTabs()
-    .then((tabs) => {
-        const state = {
-            command: "set-state",
-            state: {oldHtml, undo: !isTimezonified},
-            tabId: tabs[0].id
-        }
-        browser.runtime.sendMessage(state)
+    utils.setState({
+        oldHtml, 
+        undo: !isTimezonified
     })
     const timezonifyBtn = document.querySelector(".timezonify-btn")
     const undoTimezonifyBtn = document.querySelector(".undo-timezonify-btn");
@@ -151,18 +125,40 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
 }
 
 
+function updateFormValues(){
+    const timeInput = document.querySelector("#time-input")
+    const timezoneSelect = document.querySelector("#timezone-select");
+    const convertedResult = document.querySelector("#converted-result")
+
+    utils.getState()
+    .then((state) => {
+        if(state) {
+            timeInput.value = state.timeValue
+            timezoneSelect.value = state.timezoneValue ?? timezoneSelect[0].value
+            convertedResult.textContent = state.convertedTime
+        }
+    })
+    
+    if(!initialized){
+        timeInput.addEventListener("input", (e) => {
+            utils.setState({
+                timeValue: e.target.value
+            })
+        })
+
+        timezoneSelect.addEventListener("input", (e) => {
+            utils.setState({
+                timezoneValue: e.target.value
+            })
+        })
+    }
+}
+
+
+var initialized = false;
 (async() => {
     await init(); // run first before anything else, but only once
     updateConfigIndicators(); // to be run everytime
-
-    document.querySelector("#time-input").addEventListener("onchange", (e) => {
-        console.log(e.target.value)
-    })
-    
-    document.querySelector("#timezone-select").addEventListener("change", (e) => {
-        console.log(e.target.value)
-    })
-    
     document.addEventListener("click", (e) => {
         function toggleTimezonifyConfig(){   
             utils.setStorageValue("enabled", !enabled);
@@ -190,7 +186,7 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
                 browser.tabs.sendMessage(tabs[0].id, {
                     command: "undo-timezonify",
                     tabId: tabs[0].id
-                }, () => {
+                }).then(() => {
                     toggleTimezonifyButtonDisplay(false)
                 })
             })
@@ -217,9 +213,12 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
             }
         } else if (e.target.classList.contains("convert-btn")){
             const time = document.querySelector("#time-input").value; // returns 24hr value
-            const result = document.querySelector("#converted-result")
+            const timezoneValue = document.querySelector("#timezone-select").value;
+            const offset = timezoneValue.split("/")[0]
+            // console.log(document.querySelector("#timezone-select").text())
+            const result = document.querySelector("#converted-result");
+            let convertedTime;
             if(time){
-                const offset = document.querySelector("#timezone-select").value;
                 let hour = parseInt(time.split(":")[0])
                 let minute = parseInt(time.split(":")[1])
                 let meridian = "am";
@@ -236,8 +235,14 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
                     formattedHour *= -1;
                     formattedMeridian = formattedMeridian == "am" ? "pm" : "am";
                 } 
-                result.innerText = `${formattedHour}:${formattedMinute}${formattedMeridian}`
+                convertedTime = `${formattedHour}:${formattedMinute}${formattedMeridian} ${clientTimezone.abbr}`
+                result.innerText = convertedTime
             } 
+            utils.setState({
+                time, 
+                timezone: timezoneValue, 
+                convertedTime
+            })
             // {
                 // result.innerHtml = `<span class="error">Time is invalid</span>` // innerHTML doesn't work!
                 // result.innerText = "Time is invalid"
@@ -245,8 +250,11 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
         }
     })
 
-    // browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
-    // .then(onClickListener)
-    // .catch(reportScriptError)
+
+    browser.runtime.onMessage.addListener((message) => {
+        if(message.command == "switch-tab"){
+            updateFormValues();
+        }
+    })
     window.hasRun = true;
 })()

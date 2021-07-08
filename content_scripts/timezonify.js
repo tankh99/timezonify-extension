@@ -4,6 +4,8 @@ var regex = /(<.*>)?((1[0-2]|0?[0-9]):([0-5]?[0-9]?)(<\/.*>)?\s?(<.*>)?([AaPp][M
 var utils;
 var oldHtml;
 
+
+
 function setStorageValue(key, value){
   browser.storage.sync.set({[key]: value})
 }
@@ -18,7 +20,6 @@ async function importScripts(){ // so far only imports 1 script: utils.js (helps
     import(browser.runtime.getURL("utils/utils.js"))
     .then((module) => {
       utils = module;
-      console.log(utils.test)
       resolve()
     })
   })
@@ -27,11 +28,6 @@ async function importScripts(){ // so far only imports 1 script: utils.js (helps
 
 
 var _timezones = []
-function timezonifyReceiver(request, sender, sendResponse){
-    // const {timezones} = request;
-    // _timezones = timezones
-}
-
 var prevRange = null;
 
 function removePopovers(){
@@ -415,15 +411,37 @@ async function init(){
 }
 
 
+function undoTimezonifyAll(tabId){
+  browser.runtime.sendMessage({
+      command: "get-state",
+      tabId: tabId
+    }).then(res => {
+      document.body.innerHTML = res.oldHtml
+    })
+  }
+
+  function timezonifyAll(text){
+  oldHtml = text;
+  while((groups = regex.exec(text)) != null){
+    const timezonified = convertTime(groups) 
+    text = text.replace(`${groups[2]} ${groups[14]}`, timezonified)
+    
+  }
+  document.body.innerHTML = text;
+  return text
+}
+
+  
 (async() => {
-  document.body.innerText
+
   if(window.hasRun){
       return;
   }
   await importScripts();
   init();
-  
-
+  browser.runtime.sendMessage({
+    command: "refresh"
+  })
   // whenever the user updates the configurations in the popup, update them here as well, removing any existing popups if user disables the extension
   browser.storage.onChanged.addListener((storage) => {
     enabled = storage.enabled != null ? storage.enabled.newValue : enabled
@@ -434,12 +452,10 @@ async function init(){
 
     })
   })
-
-
   window.hasRun = true;
 })()
 
-    
+// this MUST be at the bottom. Putting it above the init function will cause the init function to not run
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if(message.command === "timezonify"){
     const oldHtml = document.body.innerHTML
@@ -453,30 +469,3 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse(timezoneData)
   }
 })
-
-function undoTimezonifyAll(tabId){
-    browser.runtime.sendMessage({
-      command: "get-state",
-      tabId: tabId
-    }).then(res => {
-      document.body.innerHTML = res.oldHtml
-    })
-}
-
-function timezonifyAll(text){
-  oldHtml = text;
-  while((groups = regex.exec(text)) != null){
-    const timezonified = convertTime(groups) 
-    text = text.replace(`${groups[2]} ${groups[14]}`, timezonified)
-    
-  }
-  document.body.innerHTML = text;
-  return text
-}
-
-// detect for page refresh, and ask background.js to clear its states cache
-if(performance.navigation.type === 1){
-  browser.runtime.sendMessage({
-    command: "refresh"
-  })
-}

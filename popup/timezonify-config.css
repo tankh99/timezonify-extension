@@ -2,6 +2,7 @@ body {
   margin: 0;
   font-family:Verdana, Geneva, Tahoma, sans-serif;
   min-width: 100px;
+  font-size: 100%;
 }
 
 .header{
@@ -9,7 +10,21 @@ body {
     flex-direction: column;
     align-items: center;
     overflow: hidden;
-    padding: 12px;
+    padding: 12px 12px 0 12px;
+}
+
+button {
+  border-radius: 5px;
+  color: white;
+  background: rgba(0, 183, 255, 0.788);
+  padding: 6px;
+  border: none;
+  cursor:pointer;
+  transition: 0.3s;
+}
+
+button:hover{
+  opacity: 0.7;
 }
 
 .error{
@@ -137,7 +152,7 @@ body {
     background: rgba(255, 255, 0, 0.5);
   }
   .tab-content-group{
-    padding: 12px;
+    padding: 0 12px 12px 12px;
   }
 
   .tab-group{
@@ -148,11 +163,22 @@ body {
 
   }
 
-
   .input-group{
     margin-bottom: 8px;
   }
 
-  .time-input{
-    width: 100%
+  .input {
+    /* width: 100%; */
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+
+  .divider{
+    border-width: 0.1px;
+    margin: 12px 0;
+    border-color: rgba(0,0,0,0.2);
+  }
+
+  .converted-result-container{
+    /* padding: 6px 0; */
   }

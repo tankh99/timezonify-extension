@@ -3,7 +3,11 @@
 <html>
   <head>
     <meta charset="utf-8">
+
+    
+    <!-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> -->
     <link rel="stylesheet" href="timezonify-config.css"/>
+    
   </head>
 
 <body>
@@ -15,26 +19,30 @@
       <button class="undo-timezonify-btn hide">Undo Timezonify</button>
       <p>Your timezone: <b id="local-timezone"></b></p>
     </div>
-    <div class="tab-group">
+    <hr class="divider"/>
+    <!-- <div class="tab-group">
       <div data-id="timezone-converter" class="tab active-tab">Converter</div>
       <div data-id="options" class="tab">Options</div>
-    </div>
+    </div> -->
     <div class="tab-content-group">
       <!-- TImezone Converter -->
       <div id="timezone-converter" class="tab-content timezone-converter">
         <div class="input-group">
           <label for="time-input">Time:</label><br/>
-          <input id="time-input" type="time" name="time"/>
+          <input id="time-input" class="input" type="time" name="time" />
         </div>
         <div class="input-group">
           <label for="timezone-select">Timezone:</label><br/>
-          <select id="timezone-select" name="timezone" placeholder="Timezone"></select>
+          <select id="timezone-select" class="input" name="timezone" placeholder="Timezone"></select>
         </div>
         <button type="button" class="convert-btn">Convert</button>
-        <span id="converted-result"></span>
+        <hr class="divider"/>
+        <div class="converted-result-container">
+        Converted Time: <b id="converted-result"></b>
+        </div>
       </div>
       <!-- Options -->
-      <div id="options" class="tab-content hide">
+      <!-- <div id="options" class="tab-content hide">
         <label class="form-switch">
           <p id="enabled-indicator" class="text-indicator">Enabled</p>
           <input type="checkbox" class="toggle-btn toggle-timezonify-btn" data-type="enabled"/>
@@ -45,10 +53,13 @@
           <input type="checkbox" class="toggle-btn toggle-autoHighlight-btn" data-type="autoHighlight"/>
           <i></i>
         </label>
-      </div>
+      </div> -->
     </div>
     </div>
+    <script type="application/javascript" src="../browser-polyfill.js"></script>
     <script type="module" src="/utils/utils.js"></script>
     <script src="timezonify-config.js"></script>
+    <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
+    
 </body>
 </html>

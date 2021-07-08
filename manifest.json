@@ -10,7 +10,10 @@
         "storage"
     ],
     "background": {
-        "scripts": ["background/background.js"]
+        "scripts": [
+            "browser-polyfill.js",
+            "background/background.js"
+        ]
     },
     "browser_action": {
         "default_icon": "icons/timezonify-logo-128.png",
@@ -20,11 +23,14 @@
     "content_scripts": [
         {
             "matches": ["<all_urls>"],
-            "js": ["content_scripts/timezonify.js"]
+            "js": [
+                "browser-polyfill.js",
+                "content_scripts/timezonify.js"
+            ]
         }
     ],
     "web_accessible_resources": [
-        "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css",
+        "browser-polyfill.js",
         "utils/utils.js",
         "data/timezones.json"
     ],
