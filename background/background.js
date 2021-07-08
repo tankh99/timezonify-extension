@@ -1,51 +1,36 @@
 
-browser.contextMenus.create({
-    id: "timezonify",
-    title: "Timezonify"
+
+var states = {}
+
+browser.tabs.onActivated.addListener((activeInfo) => {
+    browser.runtime.sendMessage({
+        command: "switch-tab"
+    })
 })
 
-async function messageTab(tabs){
-    
-    browser.tabs.sendMessage(tabs[0].id, {
-        replacement: "I have changedzzz!!",
-    })
-}
-
-async function messageTimezonify(tabs){
-    const timezones = await (await fetch("data/timezones.json")).json()
-    console.log(timezones)
-    browser.tabs.sendMessage(tabs[0].id, {
-        timezones
-    })
-}
-
-function onExecutedEatPage(result){
-    var query = browser.tabs.query({
-        active: true,
-        currentWindow: true
-    })
-    query.then(messageTab)
-}
-
-function onExecuted(result){
-    var query = browser.tabs.query({
-        active:true,
-        currentWindow:true
-    })
-    query.then(messageTimezonify)
-}
-
-
-browser.contextMenus.onClicked.addListener((info, tab) => {
-    if(info.menuItemId == "eat-page"){
-        let executing = browser.tabs.executeScript({
-            file: "content_scripts/page-eater.js"
-        })
-        executing.then(onExecutedEatPage)
-    } else if (info.menuItemId == "timezonify"){
-        let executing = browser.tabs.executeScript({
-            file: "content_scripts/timezonify.js"
-        })
-        executing.then(onExecuted)
+// provides a storage that lasts only until the browser refreshes
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    const tabId = request.tabId
+    if(request.command === "set-state"){
+        // console.log(request)
+        if(!request.state.undo) {
+            states[tabId] = {
+                ...states[tabId],
+                ...request.state
+            }
+        } else {
+            states[tabId] = {
+                ...states[tabId],
+                oldHtml: null
+            }
+        }
+    } else if(request.command === "get-state"){
+        sendResponse(states[tabId])
+    } else if (request.command === "refresh"){
+        states = {
+            ...states,
+            [sender.tab.id]: {},
+        };
     }
+    refreshed = false
 })

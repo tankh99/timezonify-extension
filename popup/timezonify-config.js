@@ -2,89 +2,259 @@
 
 // const src = browser.runtime.getURL("data/storage.js");
 // const storage = await import(src);
-
-function setStorageValue(key, value){
-    browser.storage.sync.set({[key]: value})
-}
-
-async function getStorageValue(key){
-    var gettingValue = await browser.storage.sync.get([key]);
-    return gettingValue && gettingValue[key]
-}
-
-function getCurrentTab(){
-    return browser.tabs.query({active: true, currentWindow: true})
-}
-
+var timezones;
+var activeTab = ""
+var clientTimezone;
+var utils;
+// config values
 var enabled; 
 var autoHighlight;
 var storage;
 
 async function init(){
-    const _enabled = await getStorageValue("enabled")
-    const _autoHighlight = await getStorageValue("autoHighlight");
-    console.log(_enabled);
-    enabled = _enabled
-    updateIndicator("enabled", _enabled)
-    autoHighlight = _autoHighlight;
-    updateIndicator("autoHighlight", _autoHighlight)
-
-
+    await importScripts();
+    await fetchTimezones();
+    updateClientTimezone();
+    populateTimezoneSelect()
+    updateTimezonifyButton();
+    updateFormValues();
+    initialized = true;
+    // document.querySelector("#timezone-select").select2(); // doesn't work because web extension doesn't support importing of external libraries?!
 }
 
-function updateIndicator(key, value){
-    
-    // const indicators = document.querySelectorAll(".text-indicator");
-    // for(let indicator of indicators){
-    //     indicator.innerText = value ? "Enabled" : "Disabled"
-        
-    // }
+var lastLoadValue = 0;
 
+async function updateTimezonifyButton(){
+    utils.getState()
+    .then((state) => {
+        if(state) {
+            toggleTimezonifyButtonDisplay(state.oldHtml != null, state.oldHtml)
+        }
+    })
+
+    
+}
+
+async function updateConfigIndicators(){
+    const _enabled = await utils.getStorageValue("enabled")
+    const _autoHighlight = await utils.getStorageValue("autoHighlight");
+    enabled = _enabled
+    updateConfigSwitch("enabled", _enabled)
+    autoHighlight = _autoHighlight;
+    updateConfigSwitch("autoHighlight", _autoHighlight)
+}
+
+async function importScripts(){
+    import("../utils/utils.js")
+    .then((module) => {
+        utils = module;
+    })
+}
+
+async function fetchTimezones(){
+    const dataUrl = browser.runtime.getURL("data/timezones.json");
+    const _timezones = await(await fetch(dataUrl)).json()
+    timezones = _timezones;
+}
+
+async function updateClientTimezone(){
+    utils.getState()
+    .then(async(state) => {
+        let localTimezoneHtml = document.querySelector("#local-timezone");
+        let localTimezone = state ? state.clientTimezone : null;
+        if(!state || !state.clientTimezone){
+            const utc = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            localTimezone = await findTimezoneDataFromTimezoneUtc(utc)
+            utils.setState({clientTimezone: localTimezone})
+        }
+        localTimezoneHtml.innerText = localTimezone.abbr;
+        clientTimezone = localTimezone
+    })
+    
+}
+
+function populateTimezoneSelect(){
+    const timezoneDropdown = document.querySelector("#timezone-select");
+    for(let timezone of timezones){
+        timezoneDropdown.appendChild(new Option(`${timezone.value} (${timezone.abbr})`, `${timezone.offset}/${timezone.abbr}`))
+    }
+}
+
+
+
+async function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
+    return new Promise(resolve => {
+        utils.getBrowserTabs()
+        .then(tabs => {
+            browser.tabs.sendMessage(tabs[0].id, {
+                command: "find-timezone",
+                data: timezoneUtc
+            }).then((response) => {
+                return resolve(response);
+            })
+        })
+    })
+  }
+
+
+function updateConfigSwitch(key, value){
     const toggles = document.querySelectorAll(".toggle-btn");
     toggles.forEach((item, index) => {
         if(item.dataset.type === key){
             item.checked = value
         }
     })
-    // document.querySelector("#enabled-indicator").innerText = _enabled ? "Enabled" : "Disabled"
-    // document.querySelector(".toggle-timezonify-btn").checked = _enabled;
-
-    // document.querySelectorAll("#autoHighlight-indicator").innerText
 
 }
 
-
-(() => {
-    init(); // init to be run everytime
-
-    if(window.hasRun){
-        return;
+async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
+    utils.setState({
+        oldHtml, 
+        undo: !isTimezonified
+    })
+    const timezonifyBtn = document.querySelector(".timezonify-btn")
+    const undoTimezonifyBtn = document.querySelector(".undo-timezonify-btn");
+    
+    if(isTimezonified){
+        timezonifyBtn.classList.add("hide")
+        undoTimezonifyBtn.classList.remove("hide")
+    } else {
+        timezonifyBtn.classList.remove("hide")
+        undoTimezonifyBtn.classList.add("hide")
     }
+}
 
 
+function updateFormValues(){
+    const timeInput = document.querySelector("#time-input")
+    const timezoneSelect = document.querySelector("#timezone-select");
+    const convertedResult = document.querySelector("#converted-result")
+
+    utils.getState()
+    .then((state) => {
+        if(state) {
+            timeInput.value = state.timeValue
+            timezoneSelect.value = state.timezoneValue ?? timezoneSelect[0].value
+            convertedResult.textContent = state.convertedTime
+        }
+    })
+    
+    if(!initialized){
+        timeInput.addEventListener("input", (e) => {
+            utils.setState({
+                timeValue: e.target.value
+            })
+        })
+
+        timezoneSelect.addEventListener("input", (e) => {
+            utils.setState({
+                timezoneValue: e.target.value
+            })
+        })
+    }
+}
+
+
+var initialized = false;
+(async() => {
+    await init(); // run first before anything else, but only once
+    updateConfigIndicators(); // to be run everytime
     document.addEventListener("click", (e) => {
-        function toggleTimezonify(){   
-            setStorageValue("enabled", !enabled);
+        function toggleTimezonifyConfig(){   
+            utils.setStorageValue("enabled", !enabled);
             enabled = !enabled;
             // updateIndicator(!enabled)
         }
 
-        function toggleAutoHighlight(){
-            setStorageValue("autoHighlight", !autoHighlight);
+        function toggleAutoHighlightConfig(){
+            utils.setStorageValue("autoHighlight", !autoHighlight);
             autoHighlight = !autoHighlight
             // updateIndicator(!autoHighlight)
         }
-
-        if (e.target.classList.contains("toggle-timezonify-btn")){
-            toggleTimezonify();
+        if(e.target.classList.contains("timezonify-btn")){
+            utils.getBrowserTabs()
+            .then((tabs) => {
+                browser.tabs.sendMessage(tabs[0].id, {
+                    command: "timezonify"
+                }).then(({oldHtml}) => {
+                    toggleTimezonifyButtonDisplay(true, oldHtml)
+                })
+            })
+        } else if (e.target.classList.contains("undo-timezonify-btn")){
+            utils.getBrowserTabs() 
+            .then((tabs) => {
+                browser.tabs.sendMessage(tabs[0].id, {
+                    command: "undo-timezonify",
+                    tabId: tabs[0].id
+                }).then(() => {
+                    toggleTimezonifyButtonDisplay(false)
+                })
+            })
+        }else if (e.target.classList.contains("toggle-timezonify-btn")){
+            toggleTimezonifyConfig();
         } else if (e.target.classList.contains("toggle-autoHighlight-btn")){
-            toggleAutoHighlight()
+            toggleAutoHighlightConfig()
+        } else if (e.target.classList.contains("tab")){
+            const id = e.target.dataset.id;
+            const allTabContent = document.querySelectorAll(".tab-content")
+            const allTabs = document.querySelectorAll(".tab");
+            for(let i = 0; i < allTabContent.length; i++){
+                const tabContent = allTabContent[i];
+                const tab = allTabs[i]
+                if(tabContent.id == id){
+                    tabContent.classList.remove("hide")
+                    tab.classList.add("active-tab")
+                    
+                } else {
+                    tabContent.classList.add("hide")
+                    tab.classList.remove("active-tab")
+                    
+                }
+            }
+        } else if (e.target.classList.contains("convert-btn")){
+            const time = document.querySelector("#time-input").value; // returns 24hr value
+            const timezoneValue = document.querySelector("#timezone-select").value;
+            const offset = timezoneValue.split("/")[0]
+            // console.log(document.querySelector("#timezone-select").text())
+            const result = document.querySelector("#converted-result");
+            let convertedTime;
+            if(time){
+                let hour = parseInt(time.split(":")[0])
+                let minute = parseInt(time.split(":")[1])
+                let meridian = "am";
+                if(hour >= 12){ // convert to 12-hour format
+                    meridian = "pm";
+                    hour -= 12
+                }
+                const {hour: hourOffset, minute: minuteOffset} = utils.cleanTimeOffset(offset)
+                const {hour: clientHourOffset, minute: clientMinuteOffset} = utils.cleanTimeOffset(clientTimezone.offset)
+                hour = hour - hourOffset + clientHourOffset;
+                minute = minute - minuteOffset + clientMinuteOffset;
+                let {hour:formattedHour, minute: formattedMinute, meridian:formattedMeridian} = utils.formatTime(hour, minute, meridian)
+                if(formattedHour < 0){
+                    formattedHour *= -1;
+                    formattedMeridian = formattedMeridian == "am" ? "pm" : "am";
+                } 
+                convertedTime = `${formattedHour}:${formattedMinute}${formattedMeridian} ${clientTimezone.abbr}`
+                result.innerText = convertedTime
+            } 
+            utils.setState({
+                time, 
+                timezone: timezoneValue, 
+                convertedTime
+            })
+            // {
+                // result.innerHtml = `<span class="error">Time is invalid</span>` // innerHTML doesn't work!
+                // result.innerText = "Time is invalid"
+            // }
         }
     })
 
-    // browser.tabs.executeScript({file: "/content_scripts/timezonify.js"})
-    // .then(onClickListener)
-    // .catch(reportScriptError)
+
+    browser.runtime.onMessage.addListener((message) => {
+        if(message.command == "switch-tab"){
+            updateFormValues();
+        }
+    })
     window.hasRun = true;
 })()
-
