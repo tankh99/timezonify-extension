@@ -1,15 +1,6 @@
 # timezonify-extension
-Makes all timings local. Select the text you want to convert into your local timezone, and click on the Timezonify button that appears above the text. 
+Makes all timings local. Simply click on the Timezonify button after opening the extension popup and Voila.
 
-You can also enable/disable the extension by clicking on the extension's popup.
-
-TODO:
-
-1. Complete the convert timezone form inside the popup - Done
-2. Figure out a way to reuse the same code for both content_scripts and popups - Done
-3. Separate the current options from the popup page and put it inside a separate options page (hint: define "options_ui" inside manifest.json).
-4. Add country name fields to major timezones
-5. Update to manifest v3
 
 # Version History:
 
@@ -27,3 +18,10 @@ v2.0: Simply highlight the text you want to convert, click on Timezonify and voi
 
 v1.0: Simply select the timing you want to convert, right-click to open up the context menu and then Timezonify!
 
+
+### To-do:
+1. Complete the convert timezone form inside the popup - Done
+2. Figure out a way to reuse the same code for both content_scripts and popups - Done
+3. Separate the current options from the popup page and put it inside a separate options page (hint: define "options_ui" inside manifest.json).
+4. Add country name fields to major timezones
+5. Update to manifest v3
