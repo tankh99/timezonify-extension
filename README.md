@@ -5,13 +5,19 @@ You can also enable/disable the extension by clicking on the extension's popup.
 
 TODO:
 
-1. Complete the convert timezone form inside the popup
-2. Figure out a way to reuse the same code for both content_scripts and popups
+1. Complete the convert timezone form inside the popup - Done
+2. Figure out a way to reuse the same code for both content_scripts and popups - Done
 3. Separate the current options from the popup page and put it inside a separate options page (hint: define "options_ui" inside manifest.json).
 4. Add country name fields to major timezones
 5. Update to manifest v3
 
 # Version History:
+
+v4.0 Feature Rework: 
+- There is now a timezonify button instead of popovers appearing over text. This button automatically converts all matched time text into the local timezone. I made the change as this is much closer to what I envisioned this extension to be. 
+- Added a form inside the browser popup that allows users to convert timezones manually. This popup has ethereal persistence for the form values inside the popup. This means that the values that the user types into the time-input and timezone-select, and even the result from converting will be retained throughout popup closes and will only reset on page refresh 
+- Added browser-polyfill.js and thus, the chrome branch is now deprecated!
+- Added utils.js, allowing the reusability of code
 
 v3.0: Feature: Added auto-highlighting, which can auto-highlight valid timing text. This will help make selections much easier. Also added toggle for auto-highlighting
 
