@@ -104,6 +104,10 @@ export const formatTime = (hour, minute, meridian, is24hr) => {
     hour = hour + 12;
     meridian = meridian ? (meridian.toLowerCase() === "am" ? "pm" : "am") : "";
   }
+  console.log(minute.toString().length)
+  if(minute.toString().length < 2){
+    minute = "0" + minute;
+  }
 
   if(hour > 12) return formatTime(hour, minute, meridian, is24hr) // hour will be more than 12 even after minusing if its 11:00pm PT and your timezone is MPST/SGT
   return { hour, minute, meridian };
