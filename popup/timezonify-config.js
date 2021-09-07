@@ -11,6 +11,19 @@ var enabled;
 var autoHighlight;
 var storage;
 
+
+async function importScripts(){
+    return new Promise((resolve) => {
+
+        import("../utils/utils.js")
+        .then((module) => {
+            console.log(module)
+            utils = module;
+            resolve()
+        })
+    })
+}
+
 async function init(){
     await importScripts();
     await fetchTimezones();
@@ -44,16 +57,9 @@ async function updateConfigIndicators(){
     updateConfigSwitch("autoHighlight", _autoHighlight)
 }
 
-async function importScripts(){
-    import("../utils/utils.js")
-    .then((module) => {
-        utils = module;
-    })
-}
 
 async function fetchTimezones(){
-    const dataUrl = browser.runtime.getURL("data/timezones.json");
-    let _timezones = await(await fetch(dataUrl)).json()
+    let _timezones = await utils.fetchTimezonesData()
     _timezones = _timezones.sort((a, b) => {
         if(a.value < b.value){
             return -1
@@ -63,7 +69,6 @@ async function fetchTimezones(){
         }
         return 0
     })
-    console.log(_timezones)
     timezones = _timezones;
 }
 
@@ -168,6 +173,7 @@ function updateFormValues(){
 var initialized = false;
 (async() => {
     await init(); // run first before anything else, but only once
+    console.log("initialized")
     updateConfigIndicators(); // to be run everytime
     document.addEventListener("click", (e) => {
         function toggleTimezonifyConfig(){   

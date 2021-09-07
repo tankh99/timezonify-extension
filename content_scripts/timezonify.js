@@ -45,12 +45,6 @@ function addPopover(range){
 }
 
 
-async function fetchTimezonesData(){
-  const dataUrl = browser.runtime.getURL("data/timezones.json");
-  const timezones = await(await fetch(dataUrl)).json()
-  return timezones
-}
-
 
 function checkSameRange(prevRange, newRange){
   if(prevRange !== null && 
@@ -407,7 +401,7 @@ async function init(){
       autoHighlight = true;
   }
 
-  _timezones = await fetchTimezonesData();
+  _timezones = await utils.fetchTimezonesData();
 }
 
 
@@ -416,7 +410,7 @@ function undoTimezonifyAll(tabId){
       command: "get-state",
       tabId: tabId
     }).then(res => {
-      document.body.innerHTML = res.oldHtml
+      setHtml(res.oldHtml)
     })
   }
 
@@ -427,8 +421,23 @@ function undoTimezonifyAll(tabId){
     text = text.replace(`${groups[2]} ${groups[14]}`, timezonified)
     
   }
-  document.body.innerHTML = text;
+  setHtml(text);
   return text
+}
+
+function setHtml(html){
+  // Purpose of the parser is to prevent unsafe assignment to HTML. However, the caveat of this is that it adds a 2nd body tag into the HTML
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(html, "text/html")
+  const tags = parsed.getElementsByTagName("body")
+  document.body.innerHTML = ``;
+
+  for(const tag of tags){
+    tag.style.padding = "0";
+    tag.style.margin = "0";
+    document.body.appendChild(tag);
+  }
+
 }
 
   

@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "timezonify",
-    "version": "4.0",
+    "version": "4.1",
     "description": "Makes all timings local. Select the timing you want to convert into your own timezone, then click on Timezonify. Voila.",
     "icons": {
         "128": "icons/timezonify-logo-128.png"
@@ -30,7 +30,6 @@
         }
     ],
     "web_accessible_resources": [
-        "browser-polyfill.js",
         "utils/utils.js",
         "data/timezones.json"
     ],

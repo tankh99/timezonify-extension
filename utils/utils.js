@@ -1,5 +1,13 @@
 // import "../browser-polyfill";
 
+
+export const  fetchTimezonesData = async() => {
+  const dataUrl = browser.runtime.getURL("data/timezones.json");
+  const timezones = await(await fetch(dataUrl)).json()
+  return timezones
+}
+
+
 export const setStorageValue = (key, value) => {
     browser.storage.sync.set({[key]: value})
 }
