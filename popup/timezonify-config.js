@@ -103,6 +103,7 @@ async function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
         command: "get-timezone-by-utc",
         timezoneUtc: timezoneUtc
     })
+    return timezone
   }
 
 
