@@ -17,7 +17,6 @@ async function importScripts(){
 
         import("../utils/utils.js")
         .then((module) => {
-            console.log(module)
             utils = module;
             resolve()
         })
@@ -77,9 +76,11 @@ async function updateClientTimezone(){
     .then(async(state) => {
         let localTimezoneHtml = document.querySelector("#local-timezone");
         let localTimezone = state ? state.clientTimezone : null;
-        if(!state || !state.clientTimezone){
+        
+        if(!state || !state.clientTimezone){ // initializing timezone. 
             const utc = Intl.DateTimeFormat().resolvedOptions().timeZone;
             localTimezone = await findTimezoneDataFromTimezoneUtc(utc)
+            console.log(localTimezone)
             utils.setState({clientTimezone: localTimezone})
         }
         localTimezoneHtml.innerText = localTimezone.abbr;
@@ -98,16 +99,9 @@ function populateTimezoneSelect(){
 
 
 async function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
-    return new Promise(resolve => {
-        utils.getBrowserTabs()
-        .then(tabs => {
-            browser.tabs.sendMessage(tabs[0].id, {
-                command: "find-timezone",
-                data: timezoneUtc
-            }).then((response) => {
-                return resolve(response);
-            })
-        })
+    const timezone = await browser.runtime.sendMessage({
+        command: "get-timezone-by-utc",
+        timezoneUtc: timezoneUtc
     })
   }
 
@@ -173,7 +167,6 @@ function updateFormValues(){
 var initialized = false;
 (async() => {
     await init(); // run first before anything else, but only once
-    console.log("initialized")
     updateConfigIndicators(); // to be run everytime
     document.addEventListener("click", (e) => {
         function toggleTimezonifyConfig(){   

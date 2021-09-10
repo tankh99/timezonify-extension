@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "timezonify",
-    "version": "4.1",
+    "version": "4.3",
     "description": "Makes all timings local. Select the timing you want to convert into your own timezone, then click on Timezonify. Voila.",
     "icons": {
         "128": "icons/timezonify-logo-128.png"
@@ -9,11 +9,11 @@
     "permissions": [
         "storage"
     ],
-    "background": {
+    "background": { 
         "scripts": [
-            "browser-polyfill.js",
-            "/background/background.js"
-        ]
+            "browser-polyfill.js"
+        ],
+        "page": "background/background.html"
     },
     "browser_action": {
         "default_icon": "icons/timezonify-logo-128.png",

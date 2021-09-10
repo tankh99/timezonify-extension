@@ -412,9 +412,9 @@ function undoTimezonifyAll(tabId){
     }).then(res => {
       setHtml(res.oldHtml)
     })
-  }
+}
 
-  function timezonifyAll(text){
+function timezonifyAll(text){
   oldHtml = text;
   while((groups = regex.exec(text)) != null){
     const timezonified = convertTime(groups) 

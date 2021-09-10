@@ -1,36 +1,63 @@
-
+import {timezones} from '../data/timezones.js'
 
 var states = {}
 
-browser.tabs.onActivated.addListener((activeInfo) => {
-    browser.runtime.sendMessage({
-        command: "switch-tab"
-    })
-})
+// UNUSED CAA 100921
+// browser.tabs.onActivated.addListener((activeInfo) => {
+//     browser.runtime.sendMessage({
+//         command: "switch-tab"
+//     })
+// })
 
 // provides a storage that lasts only until the browser refreshes
+// dsiabled code which allows each individual tab to have their own state. to re-enable simply uncomment out the tabId code portions
+
 browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const tabId = request.tabId
     if(request.command === "set-state"){
-        // console.log(request)
         if(!request.state.undo) {
-            states[tabId] = {
-                ...states[tabId],
+            // states[tabId] = {
+            //     ...states[tabId],
+            //     ...request.state
+            // }
+            states = {
+                ...states,
                 ...request.state
             }
         } else {
-            states[tabId] = {
-                ...states[tabId],
+            states = {
+                ...states,
                 oldHtml: null
             }
+            // states[tabId] = {
+            //     ...states[tabId],
+            //     oldHtml: null
+            // }
         }
     } else if(request.command === "get-state"){
-        sendResponse(states[tabId])
+        // sendResponse(states[tabId])
+        sendResponse(states)
     } else if (request.command === "refresh"){
         states = {
             ...states,
             [sender.tab.id]: {},
         };
+    } else if (request.command === "get-timezones"){
+        sendResponse(timezones)
+    } else if (request.command === "get-timezone-by-utc"){
+        const timezone = findTimezoneDataFromTimezoneUtc(request.timezoneUtc)
+        sendResponse(timezone)
     }
-    refreshed = false
+    // refreshed = false
 })
+
+
+function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
+    return timezones.find((timezone) => {
+      const containsUtc =
+        timezone.utc.filter((utc) => {
+          return utc === timezoneUtc;
+        }).length > 0;
+      return containsUtc;
+    });
+  }

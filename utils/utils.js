@@ -2,8 +2,15 @@
 
 
 export const  fetchTimezonesData = async() => {
-  const dataUrl = browser.runtime.getURL("data/timezones.json");
-  const timezones = await(await fetch(dataUrl)).json()
+
+  // const dataUrl = browser.runtime.getURL("data/timezones.json");
+  // const timezones = await(await fetch(dataUrl)).json()
+
+  const tabs = await getBrowserTabs()
+  const timezones = await browser.runtime.sendMessage({
+    command: "get-timezones",
+    tabId: tabs[0].id
+  })
   return timezones
 }
 
@@ -23,6 +30,8 @@ export const getBrowserTabs = async () => {
     browser.tabs.query({active: true, currentWindow: true})
     .then((tabs) => {
       resolve(tabs);
+    }).catch((err) => {
+      console.error(err)
     })
   })
 }
@@ -36,6 +45,8 @@ export const getState = async () => {
         tabId: tabs[0].id
       }).then((state) => {
         resolve(state)
+      }).catch((err) => {
+        console.error(err)
       })
     })
   })
@@ -51,6 +62,8 @@ export const setState = async (state) => {
         tabId: tabs[0].id
       }).then(() => {
         resolve()
+      }).catch((err) => {
+        console.error(err)
       })
     })
   })
