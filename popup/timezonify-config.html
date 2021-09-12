@@ -27,19 +27,29 @@
     <div class="tab-content-group">
       <!-- TImezone Converter -->
       <div id="timezone-converter" class="tab-content timezone-converter">
-        <div class="input-group">
-          <label for="time-input">Time:</label><br/>
-          <input id="time-input" class="input" type="time" name="time" />
+        <div class="flex justify-between">
+          <div class="input-group">
+            <label for="time-input">Time:</label><br/>
+            <input id="time-input" class="input" type="time" name="time" />
+          </div>
+          <div class="input-group">
+            <div class="converted-result-container">
+            Converted Time: 
+            <div id="converted-result" class="result-time-input">
+              
+            </div>
+            <!-- <b id="converted-result"></b> -->
+            </div>
+          </div>
         </div>
         <div class="input-group">
           <label for="timezone-select">Timezone:</label><br/>
           <select id="timezone-select" class="input" name="timezone" placeholder="Timezone"></select>
         </div>
         <button type="button" class="convert-btn">Convert</button>
-        <hr class="divider"/>
-        <div class="converted-result-container">
-        Converted Time: <b id="converted-result"></b>
-        </div>
+        <!-- <div class="converted-result-container">
+          Converted Time: <b id="converted-result"></b>
+          </div> -->
       </div>
       <!-- Options -->
       <!-- <div id="options" class="tab-content hide">

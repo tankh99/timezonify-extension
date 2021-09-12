@@ -5,6 +5,14 @@ body {
   font-size: 100%;
 }
 
+.flex{
+  display: flex;
+}
+
+.justify-between{
+  justify-content: space-between;
+}
+
 .header{
     display: flex;
     flex-direction: column;
@@ -181,4 +189,15 @@ button:hover{
 
   .converted-result-container{
     /* padding: 6px 0; */
+  }
+
+  .result-time-input{
+    border: 1px solid rgba(0,0,0,0.8);
+    margin-top: 5px;
+    height: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding:1px 3px;
+    font-weight: bold;
   }
