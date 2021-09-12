@@ -175,7 +175,7 @@ function convertTime(groups){
           hour: targetHour,
           minute: targetMinute,
           meridian: targetMeridian
-      } = getOffsetTime(
+      } = utils.getOffsetTime(
           hour,
           minute,
           sourceTimezoneData.offset,
@@ -222,76 +222,7 @@ function convertTime(groups){
   }
   
   // 
-  function getOffsetTime(hour, minute, sourceOffset, clientOffset, meridian) {
-    const { hour: cleanedClientOffset, minute: clientMinute } = cleanTimeOffset(
-      clientOffset
-    );
-    const { hour: cleanedSourceOffset, minute: sourceMinute } = cleanTimeOffset(
-      sourceOffset
-    );
-    
-    hour = hour - cleanedSourceOffset + cleanedClientOffset;
-    minute = minute - sourceMinute + clientMinute;
   
-    return formatTime(hour, minute, meridian, meridian == null);
-  }
-  
-  function formatTime(hour, minute, meridian, is24hr) {
-
-    if(is24hr){
-  
-      if (minute >= 60) {
-        minute -= 60;
-        hour += 1;
-      } else if (minute < 0) {
-        minute += 60;
-        hour -= 1;
-      }
-  
-      if(minute === 0){
-        minute = "00"
-      }
-  
-      if(hour > 24){
-        hour -= 24;
-      }
-  
-      if(hour < 10){
-        hour = "0" + hour 
-      }
-  
-      if(hour > 24) return formatTime(hour, minute, meridian, is24hr)
-      return {hour, minute, meridian: ""}
-    }
-  
-    if (minute >= 60) {
-        minute -= 60;
-        hour += 1;
-    } else if (minute < 0) {
-        minute += 60;
-        hour -= 1;
-    }
-
-    if(minute === 0){
-        minute = "00"
-    }
-
-    if (hour > 12) {
-        hour = hour - 12;
-        meridian = meridian ? (meridian.toLowerCase() === "am" ? "pm" : "am") : "";
-    }
-    if(hour > 12) return formatTime(hour, minute, meridian, is24hr) // hour will be more than 12 even after minusing if its 11:00pm PT and your timezone is MPST/SGT
-    return { hour, minute, meridian };
-    
-  }
-  
-  // converts the decimal places in some offsets to be properly accounted inside the minute value instead of the hour value
-  function cleanTimeOffset(offset) {
-    let decimalPlace = offset % 1;
-    let hour = offset - decimalPlace;
-    return { hour, minute: decimalPlace * 60 };
-  }
-
 
   function iterateThroughNode(node, regex){
     let indexes = []

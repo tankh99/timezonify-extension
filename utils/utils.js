@@ -29,7 +29,6 @@ export const getStorageValue = async(key) => {
 
 export const getBrowserTabs = async () => {
   return new Promise((resolve) => {
-    console.log(browser)
     if(browser.tabs){
 
       browser.tabs.query({active: true, currentWindow: true})
@@ -83,6 +82,23 @@ export const cleanTimeOffset = (offset) => {
   return { hour, minute: decimalPlace * 60 };
 }
 
+export const getOffsetTime = (hour, minute, sourceOffset, clientOffset, meridian) => {
+  const { hour: cleanedClientOffset, minute: clientMinute } = cleanTimeOffset(
+    clientOffset
+  );
+  const { hour: cleanedSourceOffset, minute: sourceMinute } = cleanTimeOffset(
+    sourceOffset
+  );
+  
+  hour = hour - cleanedSourceOffset + cleanedClientOffset;
+  minute = minute - sourceMinute + clientMinute;
+  console.log(hour)
+
+  console.log(minute)
+
+  return utils.formatTime(hour, minute, meridian, meridian == null);
+}
+
 export const formatTime = (hour, minute, meridian, is24hr) => {
 
   if(is24hr){
@@ -124,7 +140,6 @@ export const formatTime = (hour, minute, meridian, is24hr) => {
   }
 
   if (hour > 12) {
-    console.log(hour)
       hour = hour - 12;
       meridian = meridian ? (meridian.toLowerCase() === "am" ? "pm" : "am") : "";
   }
@@ -133,7 +148,6 @@ export const formatTime = (hour, minute, meridian, is24hr) => {
     hour = hour + 12;
     meridian = meridian ? (meridian.toLowerCase() === "am" ? "pm" : "am") : "";
   }
-  console.log(minute.toString().length)
   if(minute.toString().length < 2){
     minute = "0" + minute;
   }
