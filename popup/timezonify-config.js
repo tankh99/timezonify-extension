@@ -229,6 +229,8 @@ var initialized = false;
             const result = document.querySelector("#converted-result");
             let convertedTime;
             if(time){
+
+                // let {hour, minute, meridian} = utils.formatTime(time)
                 let hour = parseInt(time.split(":")[0])
                 let minute = parseInt(time.split(":")[1])
                 let meridian = "am";
@@ -238,8 +240,10 @@ var initialized = false;
                 }
                 const {hour: hourOffset, minute: minuteOffset} = utils.cleanTimeOffset(offset)
                 const {hour: clientHourOffset, minute: clientMinuteOffset} = utils.cleanTimeOffset(clientTimezone.offset)
-                hour = hour - hourOffset + clientHourOffset;
-                minute = minute - minuteOffset + clientMinuteOffset;
+                // if client hour offset is less than target hour offset, minus it from the hour. Basically, subtract the smaller offset from the hour
+                hour = clientHourOffset < hourOffset ? hour - clientHourOffset + hourOffset : hour - hourOffset + clientHourOffset;
+                // opposite to the above: subtract the greater minute offset from the minute
+                minute = clientMinuteOffset < minuteOffset ? minute - minuteOffset + clientMinuteOffset : minute - clientMinuteOffset + minuteOffset;
                 let {hour:formattedHour, minute: formattedMinute, meridian:formattedMeridian} = utils.formatTime(hour, minute, meridian)
                 if(formattedHour < 0){
                     formattedHour *= -1;
