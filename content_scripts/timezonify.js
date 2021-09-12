@@ -206,7 +206,9 @@ function convertTime(groups){
   }
   
   function findTimezoneDataFromTimezone(timezone) {
-    return _timezones.find((timezoneData) => timezoneData.abbr === timezone || (timezoneData.aliases && timezoneData.aliases.includes(timezone)));
+    return _timezones.find((timezoneData) => {
+      return timezoneData.abbr === timezone || (timezoneData.aliases && timezoneData.aliases.includes(timezone))
+    });
   }
   
   function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
@@ -473,8 +475,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.command === "undo-timezonify"){
     undoTimezonifyAll(message.tabId);
   }
-  else if(message.command == "find-timezone"){
-    const timezoneData = findTimezoneDataFromTimezoneUtc(message.data)
-    sendResponse(timezoneData)
-  }
+  // else if(message.command == "find-timezone"){
+  //   const timezoneData = findTimezoneDataFromTimezoneUtc(message.data)
+  //   sendResponse(timezoneData)
+  // }
 })

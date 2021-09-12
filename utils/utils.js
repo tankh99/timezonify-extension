@@ -5,11 +5,13 @@ export const  fetchTimezonesData = async() => {
 
   // const dataUrl = browser.runtime.getURL("data/timezones.json");
   // const timezones = await(await fetch(dataUrl)).json()
-
-  const tabs = await getBrowserTabs()
+  // if(isContentScript){
+  //   await browser.
+  // }
+  // const tabs = await getBrowserTabs()
   const timezones = await browser.runtime.sendMessage({
     command: "get-timezones",
-    tabId: tabs[0].id
+    // tabId: tabs[0].id
   })
   return timezones
 }
@@ -27,19 +29,25 @@ export const getStorageValue = async(key) => {
 
 export const getBrowserTabs = async () => {
   return new Promise((resolve) => {
-    browser.tabs.query({active: true, currentWindow: true})
-    .then((tabs) => {
-      resolve(tabs);
-    }).catch((err) => {
-      console.error(err)
-    })
+    console.log(browser)
+    if(browser.tabs){
+
+      browser.tabs.query({active: true, currentWindow: true})
+      .then((tabs) => {
+        resolve(tabs);
+      }).catch((err) => {
+        console.error(err)
+      })
+    }
   })
 }
+
+
+
 export const getState = async () => {
   return new Promise((resolve) => {
     getBrowserTabs()
     .then((tabs) => {
-
       browser.runtime.sendMessage({
         command: "get-state",
         tabId: tabs[0].id
