@@ -1,17 +1,10 @@
 // import "../browser-polyfill";
 
 
-export const  fetchTimezonesData = async() => {
+export const fetchTimezonesData = async() => {
 
-  // const dataUrl = browser.runtime.getURL("data/timezones.json");
-  // const timezones = await(await fetch(dataUrl)).json()
-  // if(isContentScript){
-  //   await browser.
-  // }
-  // const tabs = await getBrowserTabs()
   const timezones = await browser.runtime.sendMessage({
-    command: "get-timezones",
-    // tabId: tabs[0].id
+    command: "get-timezones"
   })
   return timezones
 }
@@ -92,11 +85,8 @@ export const getOffsetTime = (hour, minute, sourceOffset, clientOffset, meridian
   
   hour = hour - cleanedSourceOffset + cleanedClientOffset;
   minute = minute - sourceMinute + clientMinute;
-  console.log(hour)
 
-  console.log(minute)
-
-  return utils.formatTime(hour, minute, meridian, meridian == null);
+  return formatTime(hour, minute, meridian, meridian == null);
 }
 
 export const formatTime = (hour, minute, meridian, is24hr) => {
@@ -155,4 +145,16 @@ export const formatTime = (hour, minute, meridian, is24hr) => {
   if(hour > 12) return formatTime(hour, minute, meridian, is24hr) // hour will be more than 12 even after minusing if its 11:00pm PT and your timezone is MPST/SGT
   return { hour, minute, meridian };
   
+}
+
+export default {
+  fetchTimezonesData,
+  setStorageValue,
+  getStorageValue,
+  getBrowserTabs,
+  getState,
+  setState,
+  cleanTimeOffset,
+  getOffsetTime,
+  formatTime
 }

@@ -24,6 +24,11 @@ async function importScripts(){
 }
 
 async function init(){
+
+//   const timezones = await browser.runtime.sendMessage({
+//     command: "get-timezones"
+//   })
+//   console.log(timezones)
     await importScripts();
     await fetchTimezones();
     updateClientTimezone();

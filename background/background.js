@@ -1,19 +1,20 @@
+import "../browser-polyfill.js"
 import {timezones} from '../data/timezones.js'
+import * as utils from '../utils/utils.js'
+
+// importScripts("../browser-polyfill.js")
+// importScripts("../data/timezones.js")
+// importScripts("../utils/utils.js")
+
+// import * as utils from "../utils/utils";
 
 var states = {}
-
-// UNUSED CAA 100921
-// browser.tabs.onActivated.addListener((activeInfo) => {
-//     browser.runtime.sendMessage({
-//         command: "switch-tab"
-//     })
-// })
 
 // provides a storage that lasts only until the browser refreshes
 // dsiabled code which allows each individual tab to have their own state. to re-enable simply uncomment out the tabId code portions
 
 browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    const tabId = request.tabId
+    // const tabId = request.tabId
     if(request.command === "set-state"){
         if(!request.state.undo) {
             // states[tabId] = {

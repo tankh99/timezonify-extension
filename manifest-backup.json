@@ -1,5 +1,5 @@
 {
-    "manifest_version": 3,
+    "manifest_version": 2,
     "name": "timezonify",
     "version": "4.4",
     "description": "Makes all timings local. Select the timing you want to convert into your own timezone, then click on Timezonify. Voila.",
@@ -9,12 +9,13 @@
     "permissions": [
         "storage"
     ],
-    "host_permissions": ["*://*/*"],
     "background": { 
-        "service_worker": "background/background.js",
-        "type": "module"
+        "scripts": [
+            "browser-polyfill.js"
+        ],
+        "page": "background/background.html"
     },
-    "action": {
+    "browser_action": {
         "default_icon": "icons/timezonify-logo-128.png",
         "default_title": "Timezonify",
         "default_popup": "popup/timezonify-config.html"
@@ -28,11 +29,13 @@
             ]
         }
     ],
-    "web_accessible_resources": [{
-        "resources": [
-            "utils/utils.js",
-            "data/timezones.json"
-        ],
-        "matches": ["*://*/*"]
-    }]
+    "web_accessible_resources": [
+        "utils/utils.js",
+        "data/timezones.json"
+    ],
+    "browser_specific_settings": {
+        "gecko":{
+            "id": "{a0da06f4-9f95-41f1-9e42-eb189dc8c758}"
+        }
+    }
 }
