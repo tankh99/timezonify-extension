@@ -6,8 +6,12 @@
 
     
     <!-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> -->
+    <!-- <link rel="stylesheet" href="../css/uikit.min.css"/> -->
+    <!-- <link rel="stylesheet" href="../lib/bootstrap-3.3.7-dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="../lib/bootstrap-3.3.7-dist/css/bootstrap-theme.min.css"/> -->
+    <link rel="stylesheet" href="../lib/select2-4.1.0-rc.0/dist/css/select2.min.css"/>
+    <link rel="stylesheet" href="../lib/jquery-timepicker/jquery.timepicker.min.css"/>
     <link rel="stylesheet" href="timezonify-config.css"/>
-    
   </head>
 
 <body>
@@ -17,59 +21,70 @@
       <p id="popup-title">Timezonify</p>
       <button class="timezonify-btn">Timezonify</button>
       <button class="undo-timezonify-btn hide">Undo Timezonify</button>
-      <p>Your timezone: <b id="local-timezone"></b></p>
+      <!-- <p>Your timezone: <b id="local-timezone"></b></p> -->
     </div>
     <hr class="divider"/>
-    <!-- <div class="tab-group">
-      <div data-id="timezone-converter" class="tab active-tab">Converter</div>
-      <div data-id="options" class="tab">Options</div>
-    </div> -->
-    <div class="tab-content-group">
-      <!-- TImezone Converter -->
-      <div id="timezone-converter" class="tab-content timezone-converter">
-        <div class="flex justify-between">
-          <div class="input-group">
-            <label for="time-input">Time:</label><br/>
-            <input id="time-input" class="input" type="time" name="time" />
-          </div>
-          <div class="input-group">
-            <div class="converted-result-container">
-            Converted Time: 
-            <div id="converted-result" class="result-time-input">
-              
-            </div>
-            <!-- <b id="converted-result"></b> -->
-            </div>
-          </div>
+    <!-- TImezone Converter -->
+    <div class="timezone-container">
+    <div class="timezone-group">
+      <select 
+        id="from-timezone"
+        class="input timezone-select" 
+        name="timezone" 
+        data-name="from-time"
+        data-opposite-name="to-time"
+        placeholder="Select Country"></select>
+      <input id="from-time-input" class="input time-input"  
+      data-timezone="from-timezone" 
+      data-corresponding-name="to-time" name="to-time"/>
+    </div>
+    
+    <div class="timezone-group">
+      <select
+        id="to-timezone"
+        class="input timezone-select" 
+        name="timezone" 
+        data-name="to-time"
+        data-opposite-name="from-time"
+        placeholder="Select Country"></select>
+      <input id="to-time-input" 
+      class="input time-input" data-timezone="to-timezone" 
+      data-corresponding-name="from-time" name="to-time"/>
+    </div>
+  </div>
+    <div class="tab-content timezone-selector">
+      <!-- <div class="flex-between">
+        <div class="input-group">
+          <label for="from-time-input">From:</label><br/>
+          <input id="from-time-input" class="input from-time-input" type="time" name="from-time" />
         </div>
         <div class="input-group">
-          <label for="timezone-select">Target Timezone:</label><br/>
-          <select id="timezone-select" class="input" name="timezone" placeholder="Timezone"></select>
+          <label for="to-time-input">To:</label><br/>
         </div>
-        <button type="button" class="convert-btn">Convert</button>
-        <!-- <div class="converted-result-container">
-          Converted Time: <b id="converted-result"></b>
-          </div> -->
-      </div>
-      <!-- Options -->
-      <!-- <div id="options" class="tab-content hide">
-        <label class="form-switch">
-          <p id="enabled-indicator" class="text-indicator">Enabled</p>
-          <input type="checkbox" class="toggle-btn toggle-timezonify-btn" data-type="enabled"/>
-          <i></i>
-        </label>
-        <label class="form-switch">
-          <p id="autoHighlight-indicator" class="text-indicator">Auto-Highlight</p>
-          <input type="checkbox" class="toggle-btn toggle-autoHighlight-btn" data-type="autoHighlight"/>
-          <i></i>
-        </label>
       </div> -->
+      
+      <!-- <div class="input-group">
+        <label for="timezone-select">Target Timezone:</label><br/>
+        <input type="time" id="converted-result"/>
+      </div> -->
+      <!-- <button type="button" class="convert-btn">Convert</button> -->
+    </div>
+    <hr class="divider"/>
+    <div class="timezones-container">
+
     </div>
     </div>
+    
+    <script src="../lib/jquery-3.6.0.min.js"></script>
     <script type="application/javascript" src="../browser-polyfill.js"></script>
+    <!-- <script src="../lib/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script> -->
+    <script src="../lib/moment.js"></script>
+    <script src="../lib/moment-timezone-with-data.js"></script>
+    <script src="../lib/select2-4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="../lib/jquery-timepicker/jquery.timepicker.min.js"></script>
     <script type="module" src="/utils/utils.js"></script>
     <script src="timezonify-config.js"></script>
-    <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
+
     
 </body>
 </html>

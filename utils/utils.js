@@ -1,14 +1,23 @@
 // import "../browser-polyfill";
 
 
-export const fetchTimezonesData = async() => {
-
+export const getTimezonesData = async() => {
   const timezones = await browser.runtime.sendMessage({
     command: "get-timezones"
   })
   return timezones
 }
 
+export const getCountriesData = async() => {
+  const countries = await browser.runtime.sendMessage({
+    command: "get-countries"
+  })
+  return countries
+}
+
+export const getTimezoneFromCountry = (countryAbbr) => {
+  return moment.tz.zonesForCountry(countryAbbr)[0]
+}
 
 export const setStorageValue = (key, value) => {
     browser.storage.sync.set({[key]: value})
@@ -148,7 +157,7 @@ export const formatTime = (hour, minute, meridian, is24hr) => {
 }
 
 export default {
-  fetchTimezonesData,
+  fetchTimezonesData: getTimezonesData,
   setStorageValue,
   getStorageValue,
   getBrowserTabs,

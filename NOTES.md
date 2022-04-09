@@ -23,3 +23,13 @@ https://github.com/mozilla/webextension-polyfill#installation
 1. Add it to manifest.json
    1. background
    2. content_scripts
+
+
+### Inspecting the popup 
+Reference here: https://extensionworkshop.com/documentation/develop/debugging/#debugging-popups
+1. Go to about:debugging. Click on This Firefox
+2. Inspect Timezonify
+2. Prevent popup auto-hide by clicking on the top-right settings icon
+3. Open popup
+4. Click on the icon that appears to the left of the settings
+5. Select timezonify.html to inspect

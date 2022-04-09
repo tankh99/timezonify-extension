@@ -10,7 +10,7 @@ var utils;
 var enabled; 
 var autoHighlight;
 var storage;
-
+var countries;
 
 async function importScripts(){
     return new Promise((resolve) => {
@@ -23,18 +23,23 @@ async function importScripts(){
     })
 }
 
+function test(){
+    // console.log(time.format())
+}
+
 async function init(){
 
 //   const timezones = await browser.runtime.sendMessage({
 //     command: "get-timezones"
 //   })
-//   console.log(timezones)
     await importScripts();
-    await fetchTimezones();
-    updateClientTimezone();
-    populateTimezoneSelect()
-    updateTimezonifyButton();
+    await getTimezones();
+    await getCountries()
     updateFormValues();
+    initClientTimezone();
+    initTimezoneSelect();
+    initTimeInput()
+    updateTimezonifyButton();
     initialized = true;
     // document.querySelector("#timezone-select").select2(); // doesn't work because web extension doesn't support importing of external libraries?!
 }
@@ -62,8 +67,8 @@ async function updateConfigIndicators(){
 }
 
 
-async function fetchTimezones(){
-    let _timezones = await utils.fetchTimezonesData()
+async function getTimezones(){
+    let _timezones = await utils.getTimezonesData()
     _timezones = _timezones.sort((a, b) => {
         if(a.value < b.value){
             return -1
@@ -76,34 +81,126 @@ async function fetchTimezones(){
     timezones = _timezones;
 }
 
-async function updateClientTimezone(){
+async function getCountries(){
+    let _countries = await utils.getCountriesData()
+    countries = _countries
+
+}
+
+
+async function initClientTimezone(){
     utils.getState()
     .then(async(state) => {
-        let localTimezoneHtml = document.querySelector("#local-timezone");
         let localTimezone = state ? state.clientTimezone : null;
         
+        const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
         if(!state || !state.clientTimezone){ // initializing timezone. 
-            const utc = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            localTimezone = await findTimezoneDataFromTimezoneUtc(utc)
-            console.log(localTimezone)
+            localTimezone = await findTimezoneDataFromTimezoneName(timezoneName)
             utils.setState({clientTimezone: localTimezone})
         }
-        localTimezoneHtml.innerText = localTimezone.abbr;
         clientTimezone = localTimezone
+        const clientTime = moment().tz(clientTimezone.timezones[0]).format("h:mm A")
+        
+        $("#from-timezone").val(clientTimezone.timezones[0]).trigger("change")
+        $("#from-time-input").val(clientTime)
     })
     
 }
 
-function populateTimezoneSelect(){
-    const timezoneDropdown = document.querySelector("#timezone-select");
-    for(let timezone of timezones){
-        timezoneDropdown.appendChild(new Option(`${timezone.value} (${timezone.abbr})`, `${timezone.offset}/${timezone.abbr}`))
-    }
+function getFormattedTimeFromInput($element){
+    const timepicker = $element.timepicker()
+    const formattedTime = timepicker.format(timepicker.getTime(), "HH:mm")
+    return formattedTime
 }
 
+function updateCorrespondingTimeInputValues($timeInput, time){
+    const timezone = $(`#${$timeInput.data("timezone")}`).val()
+    const correspondingTimezone = $(`#${$timeInput.data("corresponding-name")}zone`).val()
+    const correspondingTimeInput = $(`#${$timeInput.data("corresponding-name")}-input`)
+    if(correspondingTimezone && time){
+        const convertedTime = convertTime(time, timezone, correspondingTimezone)
+        correspondingTimeInput.val(convertedTime)
+    }
 
+    
+}
 
-async function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
+function initTimeInput(){
+    $(".time-input").each((index, input) => {
+        const timeInput = $(input)
+        timeInput.timepicker({
+            timeFormat: "h:mm p",
+            change: (time) => {
+                utils.setState({
+                    fromTimeValue: time
+                })
+                const formattedTime = getFormattedTimeFromInput(timeInput)
+                console.log(formattedTime)
+                updateCorrespondingTimeInputValues(timeInput, formattedTime)
+            }, 
+        })
+        $(timeInput).on("focus", (e) => {
+            $(e.target).select()
+        })
+    })
+}
+
+function initTimezoneSelect(){
+    $(document).on("select2:open", () => {
+        document.querySelector(".select2-search__field").focus()
+    })
+    
+    $(".timezone-select").each((index, dropdown) => {
+        const timezoneDropdown = $(dropdown)
+        timezoneDropdown.select2({
+            width: "50%",
+            placeholder: "Select Country",
+            dropdownCssClass: "select2-typography",
+            selectionCssClass: "select2-typography select2-selection"
+        })
+        for (let country of countries){
+            const option = new Option(country.name, `${country.timezones[0]}`, false, false)
+            timezoneDropdown.append(option)
+        }
+        timezoneDropdown.on("input", (e) => {
+            const timezoneId = timezoneDropdown.attr("id")
+            const oppositeTimeInput = $(`#${timezoneDropdown.data("opposite-name")}-input`)
+            const oppositeTimezoneSelect = $(`#${timezoneDropdown.data("opposite-name")}zone`)
+            const correspondingTimeInput = $(`#${timezoneDropdown.data("name")}-input`)
+            utils.setState({
+                [timezoneId]: e.target.value
+            })
+            
+            if(oppositeTimeInput.val()){
+                const formattedTime = getFormattedTimeFromInput(oppositeTimeInput)
+                console.log("formattedTime", formattedTime)
+                const toTime = convertTime(formattedTime, timezoneDropdown.val(), e.target.value)
+                console.log("to time", toTime)
+                updateCorrespondingTimeInputValues(oppositeTimeInput, formattedTime)
+                // correspondingTimeInput.val(toTime)
+                // if(timezoneId == "from-timezone") {
+                //     console.log("triggering change for", correspondingTimeInput)
+                //     correspondingTimeInput.trigger("change")
+                // }
+            }
+        })
+        timezoneDropdown.val("").trigger("change")
+    })
+    
+}
+
+function convertTime(fromTimeValue, fromTimezone, toTimezone){
+    const timeData = fromTimeValue.split(":")
+    const hours = timeData[0]
+    const minutes = timeData[1]
+    let fromDate = moment.tz(fromTimezone)
+    fromDate.hours(hours)
+    fromDate.minutes(minutes)
+    const toValue = fromDate.tz(toTimezone).format("h:mm A")
+    return toValue
+}
+
+async function findTimezoneDataFromTimezoneName(timezoneUtc) {
     const timezone = await browser.runtime.sendMessage({
         command: "get-timezone-by-utc",
         timezoneUtc: timezoneUtc
@@ -141,39 +238,36 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
 
 
 function updateFormValues(){
-    const timeInput = document.querySelector("#time-input")
-    const timezoneSelect = document.querySelector("#timezone-select");
-    const convertedResult = document.querySelector("#converted-result")
+    const fromTimeInput = $("#from-time-input")
+    const toTimeInput = $("#to-time-input")
+    const fromTimezoneSelect = $("#from-timezone");
+    const toTimezoneSelect = $("#to-timezone");
+
+
 
     utils.getState()
     .then((state) => {
         if(state) {
-            timeInput.value = state.timeValue
-            timezoneSelect.value = state.timezoneValue ?? timezoneSelect[0].value
-            convertedResult.textContent = state.convertedTime
-        }
+            fromTimeInput.val(state.fromTimeValue)
+            toTimeInput.val(state.toTimeValue)
+            fromTimezoneSelect.val(state.fromTimezone ?? fromTimezoneSelect[0].value).trigger("change")
+            toTimezoneSelect.val(state.toTimezone ?? toTimezoneSelect[0].value).trigger("change")
+        } 
     })
     
-    if(!initialized){
-        timeInput.addEventListener("input", (e) => {
-            utils.setState({
-                timeValue: e.target.value
-            })
-        })
-
-        timezoneSelect.addEventListener("input", (e) => {
-            utils.setState({
-                timezoneValue: e.target.value
-            })
-        })
-    }
 }
 
 
 var initialized = false;
-(async() => {
+
+// $(".timezone-select").on("change", (e) => {
+//     console.log(e.target.value)
+// })
+
+$(document).ready(async () => {
+
     await init(); // run first before anything else, but only once
-    updateConfigIndicators(); // to be run everytime
+    // updateConfigIndicators(); // to be run everytime
     document.addEventListener("click", (e) => {
         function toggleTimezonifyConfig(){   
             utils.setStorageValue("enabled", !enabled);
@@ -209,7 +303,7 @@ var initialized = false;
             toggleTimezonifyConfig();
         } else if (e.target.classList.contains("toggle-autoHighlight-btn")){
             toggleAutoHighlightConfig()
-        } else if (e.target.classList.contains("tab")){
+        } else if (e.target.classList.contains("tab")){ // DEPRECATED CODE for multiple tabs in the popup
             const id = e.target.dataset.id;
             const allTabContent = document.querySelectorAll(".tab-content")
             const allTabs = document.querySelectorAll(".tab");
@@ -227,41 +321,55 @@ var initialized = false;
                 }
             }
         } else if (e.target.classList.contains("convert-btn")){
-            const time = document.querySelector("#time-input").value; // returns 24hr value
-            const timezoneValue = document.querySelector("#timezone-select").value;
-            const offset = timezoneValue.split("/")[0]
-            // console.log(document.querySelector("#timezone-select").text())
-            const result = document.querySelector("#converted-result");
-            let convertedTime;
-            if(time){
+            const value = document.querySelector("#timezone-select").value;
+            // const time = moment.tz(new Date(), clientTimezone.utc[0])
+            // console.log(moment.tz.zonesForCountry(value))
+            const fromTime = document.querySelector("#from-time-input").value
+            console.log(fromTime)
+            const timezone = utils.getTimezoneFromCountry(value)
+            const fromDate = moment(fromTime, "HH:mm")
+            console.log(timezone)
 
-                // let {hour, minute, meridian} = utils.formatTime(time)
-                let hour = parseInt(time.split(":")[0])
-                let minute = parseInt(time.split(":")[1])
-                let meridian = "am";
-                if(hour >= 12){ // convert to 12-hour format
-                    meridian = "pm";
-                    hour -= 12
-                }
-                const {hour: hourOffset, minute: minuteOffset} = utils.cleanTimeOffset(offset)
-                const {hour: clientHourOffset, minute: clientMinuteOffset} = utils.cleanTimeOffset(clientTimezone.offset)
-                // if client hour offset is less than target hour offset, minus it from the hour. Basically, subtract the smaller offset from the hour
-                hour = clientHourOffset < hourOffset ? hour - clientHourOffset + hourOffset : hour - hourOffset + clientHourOffset;
-                // opposite to the above: subtract the greater minute offset from the minute
-                minute = clientMinuteOffset < minuteOffset ? minute - minuteOffset + clientMinuteOffset : minute - clientMinuteOffset + minuteOffset;
-                let {hour:formattedHour, minute: formattedMinute, meridian:formattedMeridian} = utils.formatTime(hour, minute, meridian)
-                if(formattedHour < 0){
-                    formattedHour *= -1;
-                    formattedMeridian = formattedMeridian == "am" ? "pm" : "am";
-                } 
-                convertedTime = `${formattedHour}:${formattedMinute}${formattedMeridian} ${clientTimezone.abbr}`
-                result.innerText = convertedTime
-            } 
-            utils.setState({
-                time, 
-                timezone: timezoneValue, 
-                convertedTime
-            })
+            console.log(fromDate.format())
+            const toDate = fromDate.tz(timezone)
+            console.log(toDate.format())
+            const result = document.querySelector("#to-time-input");
+            result.value = toDate.format("HH:mm")
+            // const time = document.querySelector("#from-time-input").value; // returns 24hr value
+            // const timezoneValue = document.querySelector("#timezone-select").value;
+            // const offset = timezoneValue.split("/")[0]
+            // // console.log(document.querySelector("#timezone-select").text())
+            // const result = document.querySelector("#converted-result");
+            // let convertedTime;
+            // if(time){
+
+            //     // let {hour, minute, meridian} = utils.formatTime(time)
+            //     let hour = parseInt(time.split(":")[0])
+            //     let minute = parseInt(time.split(":")[1])
+            //     let meridian = "am";
+            //     if(hour >= 12){ // convert to 12-hour format
+            //         meridian = "pm";
+            //         hour -= 12
+            //     }
+            //     const {hour: hourOffset, minute: minuteOffset} = utils.cleanTimeOffset(offset)
+            //     const {hour: clientHourOffset, minute: clientMinuteOffset} = utils.cleanTimeOffset(clientTimezone.offset)
+            //     // if client hour offset is less than target hour offset, minus it from the hour. Basically, subtract the smaller offset from the hour
+            //     hour = clientHourOffset < hourOffset ? hour - clientHourOffset + hourOffset : hour - hourOffset + clientHourOffset;
+            //     // opposite to the above: subtract the greater minute offset from the minute
+            //     minute = clientMinuteOffset < minuteOffset ? minute - minuteOffset + clientMinuteOffset : minute - clientMinuteOffset + minuteOffset;
+            //     let {hour:formattedHour, minute: formattedMinute, meridian:formattedMeridian} = utils.formatTime(hour, minute, meridian)
+            //     if(formattedHour < 0){
+            //         formattedHour *= -1;
+            //         formattedMeridian = formattedMeridian == "am" ? "pm" : "am";
+            //     } 
+            //     convertedTime = `${formattedHour}:${formattedMinute}${formattedMeridian} ${clientTimezone.abbr}`
+            //     result.innerText = convertedTime
+            // } 
+            // utils.setState({
+            //     time, 
+            //     timezone: timezoneValue, 
+            //     convertedTime
+            // })
             // {
                 // result.innerHtml = `<span class="error">Time is invalid</span>` // innerHTML doesn't work!
                 // result.innerText = "Time is invalid"
@@ -269,11 +377,10 @@ var initialized = false;
         }
     })
 
-
     browser.runtime.onMessage.addListener((message) => {
         if(message.command == "switch-tab"){
             updateFormValues();
         }
     })
     window.hasRun = true;
-})()
+})

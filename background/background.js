@@ -1,5 +1,6 @@
 import "../browser-polyfill.js"
 import {timezones} from '../data/timezones.js'
+import {countries} from '../data/countries.js'
 import * as utils from '../utils/utils.js'
 
 // importScripts("../browser-polyfill.js")
@@ -36,7 +37,6 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
             // }
         }
     } else if(request.command === "get-state"){
-        // sendResponse(states[tabId])
         sendResponse(states)
     } else if (request.command === "refresh"){
         states = {
@@ -46,19 +46,25 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.command === "get-timezones"){
         sendResponse(timezones)
     } else if (request.command === "get-timezone-by-utc"){
-        const timezone = findTimezoneDataFromTimezoneUtc(request.timezoneUtc)
+        const timezone = findTimezoneDataFromTimezoneName(request.timezoneUtc)
         sendResponse(timezone)
+    } else if (request.command === "get-countries"){
+        sendResponse(countries)
     }
     // refreshed = false
 })
 
 
-function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
-    return timezones.find((timezone) => {
-      const containsUtc =
-        timezone.utc.filter((utc) => {
-          return utc === timezoneUtc;
-        }).length > 0;
-      return containsUtc;
-    });
+function findTimezoneDataFromTimezoneName(timezoneName) {
+    return countries.find((country) => {
+        const containsTimezone = country.timezones.filter((timezone) => timezoneName == timezone).length > 0
+        return containsTimezone
+    })
+    // return timezones.find((timezone) => {
+    //   const containsUtc =
+    //     timezone.utc.filter((utc) => {
+    //       return utc === timezoneUtc;
+    //     }).length > 0;
+    //   return containsUtc;
+    // });
   }

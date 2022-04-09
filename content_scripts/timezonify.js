@@ -201,7 +201,7 @@ function convertTime(groups){
   function getClientTimezoneData() {
     // const offset = new Date().getTimezoneOffset() / 60;
     const utc = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const timezoneData = findTimezoneDataFromTimezoneUtc(utc)
+    const timezoneData = findTimezoneDataFromTimezoneName(utc)
     return timezoneData;
   }
   
@@ -211,7 +211,7 @@ function convertTime(groups){
     });
   }
   
-  function findTimezoneDataFromTimezoneUtc(timezoneUtc) {
+  function findTimezoneDataFromTimezoneName(timezoneUtc) {
     return _timezones.find((timezone) => {
       const containsUtc =
         timezone.utc.filter((utc) => {
@@ -334,7 +334,7 @@ async function init(){
       autoHighlight = true;
   }
 
-  _timezones = await utils.fetchTimezonesData();
+  _timezones = await utils.getTimezonesData();
 }
 
 
