@@ -35,8 +35,8 @@ async function init(){
     await importScripts();
     await getTimezones();
     await getCountries()
-    updateFormValues();
     initClientTimezone();
+    updateFormValues();
     initTimezoneSelect();
     initTimeInput()
     updateTimezonifyButton();
@@ -99,10 +99,13 @@ async function initClientTimezone(){
             utils.setState({clientTimezone: localTimezone})
         }
         clientTimezone = localTimezone
-        const clientTime = moment().tz(clientTimezone.timezones[0]).format("h:mm A")
-        
+        // const clientTime = moment().tz(timezoneName).format("h:mm A")
+        // const clientDate = moment().tz(clientTimezone.timezones[0]).format("ddd, MMM Do")
+        const [clientTime, clientDate] = convertTime(new Date(), timezoneName, timezoneName)
+        console.log(clientTime)
         $("#from-timezone").val(clientTimezone.timezones[0]).trigger("change")
         $("#from-time-input").val(clientTime)
+        $("#from-date").text(clientDate)
     })
     
 }
@@ -113,35 +116,51 @@ function getFormattedTimeFromInput($element){
     return formattedTime
 }
 
-function updateCorrespondingTimeInputValues($timeInput, time){
+function updateOppositeDatetimeValues($timeInput, fromTime){
     const timezone = $(`#${$timeInput.data("timezone")}`).val()
-    const correspondingTimezone = $(`#${$timeInput.data("corresponding-name")}zone`).val()
-    const correspondingTimeInput = $(`#${$timeInput.data("corresponding-name")}-input`)
-    if(correspondingTimezone && time){
-        const convertedTime = convertTime(time, timezone, correspondingTimezone)
-        correspondingTimeInput.val(convertedTime)
-    }
-
+    const oppositeId = $timeInput.data("opposite-id")
+    const id = $timeInput.data("id")
+    const oppositeTimezone = $(`#${oppositeId}-timezone`).val()
+    const oppositeTimeInput = $(`#${oppositeId}-time-input`)
+    const oppositeDate = $(`#${oppositeId}-date`)
+    const correspondingDate = $(`#${id}-date`)
     
+    if(oppositeTimezone && fromTime){
+        const [convertedTime, convertedDate, fromDate] = convertTime(fromTime, timezone, oppositeTimezone, $timeInput.attr("id") == "from-time-input")
+        
+        console.log("convertedDate", convertedDate)
+        console.log("convertedTime", convertedTime)
+        console.log("fromDate", fromDate)
+        oppositeTimeInput.val(convertedTime)
+        oppositeDate.text(convertedDate)
+        correspondingDate.text(fromDate)
+    }
 }
 
 function initTimeInput(){
     $(".time-input").each((index, input) => {
-        const timeInput = $(input)
-        timeInput.timepicker({
+        const $timeInput = $(input)
+        $timeInput.timepicker({
             timeFormat: "h:mm p",
             change: (time) => {
-                utils.setState({
-                    fromTimeValue: time
-                })
-                const formattedTime = getFormattedTimeFromInput(timeInput)
-                console.log(formattedTime)
-                updateCorrespondingTimeInputValues(timeInput, formattedTime)
+                if(typeof time === "object"){
+
+                    // if(typeof time === "Date")
+
+                    utils.setState({
+                        [$timeInput.attr("id")]: time
+                    })
+                    const formattedFromTime = getFormattedTimeFromInput($timeInput)
+                    updateOppositeDatetimeValues($timeInput, formattedFromTime)
+                } else {
+                    console.error("Time is not in a proper format", time)
+                }
             }, 
         })
-        $(timeInput).on("focus", (e) => {
+        $($timeInput).on("focus dblclick", (e) => {
             $(e.target).select()
         })
+
     })
 }
 
@@ -166,38 +185,62 @@ function initTimezoneSelect(){
             const timezoneId = timezoneDropdown.attr("id")
             const oppositeTimeInput = $(`#${timezoneDropdown.data("opposite-name")}-input`)
             const oppositeTimezoneSelect = $(`#${timezoneDropdown.data("opposite-name")}zone`)
-            const correspondingTimeInput = $(`#${timezoneDropdown.data("name")}-input`)
-            utils.setState({
-                [timezoneId]: e.target.value
-            })
+            const correspondingTimeInput = $(`#${timezoneDropdown.data("id")}-time-input`)
             
             if(oppositeTimeInput.val()){
                 const formattedTime = getFormattedTimeFromInput(oppositeTimeInput)
-                console.log("formattedTime", formattedTime)
-                const toTime = convertTime(formattedTime, timezoneDropdown.val(), e.target.value)
-                console.log("to time", toTime)
-                updateCorrespondingTimeInputValues(oppositeTimeInput, formattedTime)
-                // correspondingTimeInput.val(toTime)
-                // if(timezoneId == "from-timezone") {
-                //     console.log("triggering change for", correspondingTimeInput)
-                //     correspondingTimeInput.trigger("change")
-                // }
+                // const [toTime, toDate] = convertTime(formattedTime, timezoneDropdown.val(), e.target.value)
+                
+                updateOppositeDatetimeValues(oppositeTimeInput, formattedTime)
+                
             }
+
+            utils.setState({
+                [timezoneId]: e.target.value,
+                // [correspondingTimeInput.attr("id")]: correspondingTimeInput.val()
+            })
         })
         timezoneDropdown.val("").trigger("change")
     })
     
 }
 
-function convertTime(fromTimeValue, fromTimezone, toTimezone){
-    const timeData = fromTimeValue.split(":")
-    const hours = timeData[0]
-    const minutes = timeData[1]
-    let fromDate = moment.tz(fromTimezone)
-    fromDate.hours(hours)
-    fromDate.minutes(minutes)
-    const toValue = fromDate.tz(toTimezone).format("h:mm A")
-    return toValue
+// isFrom is only true if the timezoneSelect or the timeInput corresponds to the from date & time 
+// fromTime
+function convertTime(fromTimeValue, fromTimezone, toTimezone, isFrom=false){
+    let rawToDate;
+    let fromDate;
+
+    if(typeof fromTimeValue == "string"){
+        const timeData = fromTimeValue.split(":")
+        const hours = timeData[0]
+        const minutes = timeData[1]
+        console.log("hours", hours, "minutes", minutes)
+        fromDate = moment.tz(fromTimezone)
+        fromDate.hours(hours)
+        fromDate.minutes(minutes)
+    } else {
+        fromDate = moment(fromTimeValue)
+    }
+
+    rawToDate = fromDate.clone().tz(toTimezone) // important to clone(), otherwise fromDate will be converted into the toTimezone
+    
+    // console.log("fromdate", fromDate)
+    // console.log("fromtimevalue", fromTimeValue)
+    if(!isFrom){ // Triggers only when the isFrom variable is false. Corrects the from date, os that it is always the current date
+        
+        if(rawToDate.date() < moment().date()){
+            rawToDate.add(1, "days")
+        } else if (rawToDate.date() > moment().date()){
+            rawToDate.subtract(1, "days")
+            fromDate.subtract(1, "days")
+        } 
+    }
+    // if(rawToDate.days())
+    const toTime = rawToDate.format("h:mm A")
+    const toDate = rawToDate.format("ddd, Do MMM")
+    const formattedFromDate = fromDate.format("ddd, Do MMM")
+    return [toTime, toDate, formattedFromDate]
 }
 
 async function findTimezoneDataFromTimezoneName(timezoneUtc) {
@@ -206,8 +249,7 @@ async function findTimezoneDataFromTimezoneName(timezoneUtc) {
         timezoneUtc: timezoneUtc
     })
     return timezone
-  }
-
+}
 
 function updateConfigSwitch(key, value){
     const toggles = document.querySelectorAll(".toggle-btn");
@@ -243,15 +285,31 @@ function updateFormValues(){
     const fromTimezoneSelect = $("#from-timezone");
     const toTimezoneSelect = $("#to-timezone");
 
-
-
     utils.getState()
     .then((state) => {
         if(state) {
-            fromTimeInput.val(state.fromTimeValue)
-            toTimeInput.val(state.toTimeValue)
-            fromTimezoneSelect.val(state.fromTimezone ?? fromTimezoneSelect[0].value).trigger("change")
-            toTimezoneSelect.val(state.toTimezone ?? toTimezoneSelect[0].value).trigger("change")
+            // toTimeInput.val(state[toTimeInput.attr("id")])
+            console.log(state)
+            fromTimezoneSelect.val(state[fromTimezoneSelect.attr("id")] ?? fromTimezoneSelect[0].value).trigger("change")
+            toTimezoneSelect.val(state[toTimezoneSelect.attr("id")] ?? toTimezoneSelect[0].value).trigger("change")
+            if(state[fromTimeInput.attr("id")]){ // To update from-time-input if user previously updated its values
+                const formattedTime = moment(state[fromTimeInput.attr("id")]).format("h:mm A")
+                fromTimeInput.val(formattedTime)
+            } 
+            // else if (state[toTimeInput].attr("id")){
+            //     const formattedTime = moment(state[toTimeInput.attr("id")]).format("hh:mm A")
+            //     toTimeInput.val(formattedTime)
+            // }
+            if(toTimezoneSelect.val()){ // Updates to-time-input and to-date if there is a to-timezone value saved in state
+                console.log("frmotimeinput.val", fromTimeInput.val())
+                const formattedTime = getFormattedTimeFromInput(fromTimeInput)
+                const [toTime, toDate] = convertTime(formattedTime, fromTimezoneSelect.val(), toTimezoneSelect.val(), true)
+                toTimeInput.val(toTime)
+                $("#to-date").text(toDate)
+                // updateOppositeDatetimeValues(toTimeInput, toTime)
+            }
+
+            
         } 
     })
     
@@ -268,6 +326,51 @@ $(document).ready(async () => {
 
     await init(); // run first before anything else, but only once
     // updateConfigIndicators(); // to be run everytime
+
+    // Swap Function
+    $("#swap-btn").on("click", (e) => {
+        const fromTimeInput = $("#from-time-input")
+        const fromTimezoneSelect = $("#from-timezone");
+        const fromDateText = $("#from-date");
+        const toTimeInput = $("#to-time-input")
+        const toTimezoneSelect = $("#to-timezone");
+        const toDateText = $("#to-date");
+
+        const fromTimeInputVal = fromTimeInput.val()
+        const fromTimezoneSelectVal = fromTimezoneSelect.val()
+        const fromDateVal = fromDateText.text()
+
+        const toTimeInputVal = toTimeInput.val()
+        const toTimezoneSelectVal = toTimezoneSelect.val()
+        const toDateVal = toDateText.text()
+        
+        let fromTime = fromTimeInputVal
+        let fromDate = fromDateVal
+        let toTime = toTimeInputVal
+        let toDate = toDateVal
+
+        // if(fromTimeInputVal && fromTimezoneSelectVal){
+        //     [fromTime, fromDate] = convertTime(getFormattedTimeFromInput(fromTimeInput), fromTimezoneSelectVal, toTimezoneSelectVal)
+        // }
+
+        // let toTime, toDate;
+        // if(toTimeInputVal && toTimezoneSelectVal){
+        //     [toTime, toDate] = convertTime(getFormattedTimeFromInput(toTimeInput), toTimezoneSelectVal, fromTimezoneSelectVal)
+        // }
+
+        console.log("fromTime", fromTime)
+        console.log("toTime", toTime)
+        toTimezoneSelect.val(fromTimezoneSelectVal).trigger("change")
+        toTimeInput.val(fromTime)
+        toDateText.text(fromDate)
+
+        fromTimezoneSelect.val(toTimezoneSelectVal).trigger("change")
+        fromTimeInput.val(toTime)
+        fromDateText.text(toDate)
+        // const currentDate = moment().format("ddd, MMM Do") // Avoids the standard swap because we always want to From date to be the date today
+        // fromDate.text(currentDate)
+    })
+
     document.addEventListener("click", (e) => {
         function toggleTimezonifyConfig(){   
             utils.setStorageValue("enabled", !enabled);

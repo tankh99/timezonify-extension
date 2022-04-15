@@ -25,31 +25,51 @@
     </div>
     <hr class="divider"/>
     <!-- TImezone Converter -->
-    <div class="timezone-container">
+  <div class="timezone-container">
     <div class="timezone-group">
-      <select 
-        id="from-timezone"
-        class="input timezone-select" 
-        name="timezone" 
-        data-name="from-time"
-        data-opposite-name="to-time"
-        placeholder="Select Country"></select>
-      <input id="from-time-input" class="input time-input"  
-      data-timezone="from-timezone" 
-      data-corresponding-name="to-time" name="to-time"/>
+      <div class="horizontal-input-group">
+        <select 
+          id="from-timezone"
+          class="input timezone-select" 
+          name="timezone" 
+          data-id="from"
+          data-opposite-name="to-time"
+          placeholder="Select Country"></select>
+        <input id="from-time-input" class="input time-input"  
+        data-timezone="from-timezone" 
+        data-id="from"
+        data-opposite-id="to" name="to-time"/>
+      </div>
+
+    <span id="from-date" class="date-display"></span>
     </div>
-    
+
+    <!-- <div class="divider"></div>
+    <div class="icon-divider-container">
+      <div class="icon-divider"></div>
+      <div id="swap-btn" class="swap-btn">
+        <span class="swap-btn-icon">&#8645;</span>
+      </div>
+      <div class="icon-divider"></div>
+    </div> -->
+    <hr class="divider"/>
+
     <div class="timezone-group">
-      <select
-        id="to-timezone"
-        class="input timezone-select" 
-        name="timezone" 
-        data-name="to-time"
-        data-opposite-name="from-time"
-        placeholder="Select Country"></select>
-      <input id="to-time-input" 
-      class="input time-input" data-timezone="to-timezone" 
-      data-corresponding-name="from-time" name="to-time"/>
+      <div class="horizontal-input-group">
+        <select
+          id="to-timezone"
+          class="input timezone-select" 
+          name="timezone" 
+          data-id="to"
+          data-opposite-name="from-time"
+          placeholder="Select Country"></select>
+        <input id="to-time-input" 
+        class="input time-input" 
+        data-id="to"
+        data-timezone="to-timezone" 
+        data-opposite-id="from" name="to-time"/>
+      </div>
+      <span id="to-date" class="date-display"></span>
     </div>
   </div>
     <div class="tab-content timezone-selector">
