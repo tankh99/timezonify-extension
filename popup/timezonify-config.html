@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="timezonify-config.css"/>
   </head>
 
-<body>
+<body id="body">
   <div id="main-content">
     <div class="header">
       <img class="logo" src="../icons/timezonify-logo-128.png" alt="timezonify-logo"/>
@@ -25,8 +25,9 @@
     </div>
     <hr class="divider"/>
     <!-- TImezone Converter -->
-  <div class="timezone-container">
-    <div class="timezone-group">
+
+  <div id="timezone-container" class="timezone-container">
+    <div id="to-timezone-group" class="timezone-group">
       <div class="horizontal-input-group">
         <select 
           id="from-timezone"
@@ -43,7 +44,6 @@
 
     <span id="from-date" class="date-display"></span>
     </div>
-
     <!-- <div class="divider"></div>
     <div class="icon-divider-container">
       <div class="icon-divider"></div>

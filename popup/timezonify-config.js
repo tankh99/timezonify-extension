@@ -27,18 +27,24 @@ function test(){
     // console.log(time.format())
 }
 
+function setLoading(loading){
+    
+}
+
 async function init(){
 
-//   const timezones = await browser.runtime.sendMessage({
-//     command: "get-timezones"
-//   })
+    
+    var parentElement = $(".asdf");
+    $(".js-example-basic-single").select2({
+        dropdownParent: parentElement
+    });
     await importScripts();
     await getTimezones();
     await getCountries()
-    initClientTimezone();
-    updateFormValues();
     initTimezoneSelect();
     initTimeInput()
+    initClientTimezone();
+    updateFormValues();
     updateTimezonifyButton();
     initialized = true;
     // document.querySelector("#timezone-select").select2(); // doesn't work because web extension doesn't support importing of external libraries?!
@@ -146,13 +152,13 @@ function initTimeInput(){
                 if(typeof time === "object"){
 
                     // if(typeof time === "Date")
-
                     utils.setState({
                         [$timeInput.attr("id")]: time
                     })
                     const formattedFromTime = getFormattedTimeFromInput($timeInput)
                     updateOppositeDatetimeValues($timeInput, formattedFromTime)
                 } else {
+                    // Usually only triggers if the user leaves the input blank or entered a string instead of time
                     console.error("Time is not in a proper format", time)
                 }
             }, 
@@ -164,9 +170,36 @@ function initTimeInput(){
     })
 }
 
+function customMatcher(params, data){
+     // If there are no search terms, return all of the data
+     if ($.trim(params.term) === '') {
+        return data;
+      }
+  
+      // Do not display the item if there is no 'text' property
+      if (typeof data.text === 'undefined') {
+        return null;
+      }
+  
+      // `params.term` should be the term that is used for searching
+      // `data.text` is the text that is displayed for the data object
+      if (data.text.indexOf(params.term) > -1) {
+        var modifiedData = $.extend({}, data, true);
+        modifiedData.text += ' (matched)';
+  
+        // You can return modified objects from here
+        // This includes matching the `children` how you want in nested data sets
+        return modifiedData;
+      }
+  
+      // Return `null` if the term should not be displayed
+      return null;
+}
+
 function initTimezoneSelect(){
     $(document).on("select2:open", () => {
-        document.querySelector(".select2-search__field").focus()
+        $(".select2-search__field").select()
+        // $(this).select2("positionDropdown", true)
     })
     
     $(".timezone-select").each((index, dropdown) => {
@@ -175,7 +208,8 @@ function initTimezoneSelect(){
             width: "50%",
             placeholder: "Select Country",
             dropdownCssClass: "select2-typography",
-            selectionCssClass: "select2-typography select2-selection"
+            selectionCssClass: "select2-typography select2-selection",
+            // dropdownParent: $("#main-content")
         })
         for (let country of countries){
             const option = new Option(country.name, `${country.timezones[0]}`, false, false)
@@ -278,7 +312,6 @@ async function toggleTimezonifyButtonDisplay(isTimezonified, oldHtml){
     }
 }
 
-
 function updateFormValues(){
     const fromTimeInput = $("#from-time-input")
     const toTimeInput = $("#to-time-input")
@@ -296,18 +329,23 @@ function updateFormValues(){
                 const formattedTime = moment(state[fromTimeInput.attr("id")]).format("h:mm A")
                 fromTimeInput.val(formattedTime)
             } 
+            // if(state[toTimeInput.attr("id")]){
+            //     const formattedTime = moment(state[toTimeInput.attr("id")]).format("h:mm A")
+            //     toTimeInput.val(formattedTime)
+            // }
             // else if (state[toTimeInput].attr("id")){
             //     const formattedTime = moment(state[toTimeInput.attr("id")]).format("hh:mm A")
             //     toTimeInput.val(formattedTime)
             // }
-            if(toTimezoneSelect.val()){ // Updates to-time-input and to-date if there is a to-timezone value saved in state
-                console.log("frmotimeinput.val", fromTimeInput.val())
-                const formattedTime = getFormattedTimeFromInput(fromTimeInput)
-                const [toTime, toDate] = convertTime(formattedTime, fromTimezoneSelect.val(), toTimezoneSelect.val(), true)
-                toTimeInput.val(toTime)
-                $("#to-date").text(toDate)
-                // updateOppositeDatetimeValues(toTimeInput, toTime)
-            }
+            
+            // if(toTimezoneSelect.val()){ // Updates to-time-input and to-date if there is a to-timezone value saved in state
+            //     console.log("frmotimeinput.val", fromTimeInput.val())
+            //     const formattedTime = getFormattedTimeFromInput(fromTimeInput)
+            //     const [toTime, toDate] = convertTime(formattedTime, fromTimezoneSelect.val(), toTimezoneSelect.val(), true)
+            //     toTimeInput.val(toTime)
+            //     $("#to-date").text(toDate)
+            //     // updateOppositeDatetimeValues(toTimeInput, toTime)
+            // }
 
             
         } 

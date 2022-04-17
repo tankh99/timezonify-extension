@@ -4,7 +4,9 @@ To help me out with coding and troubleshooting
 This URL contains a very helpful example which involves traversing through text nodes of a DOM https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/find/find
 
 ### Zipping
-```zip -r dir.zip . -x ".*" -x "__MACOSX" -x "example.html" -x "NOTES.md" -x ".gitignore" -x ".git" -x "*screenshots*""```
+```
+zip -r timezonify.zip . -x ".*" -x "__MACOSX" -x "example.html" -x "NOTES.md" -x ".gitignore" -x ".git" -x "*screenshots*"
+```
 This command zips up the package without including the junk files like _MACOSX and DS_STORE, as well as ignoring all the previously ignored files
 
 ### Testing on different browser
