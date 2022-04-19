@@ -5,7 +5,7 @@ This URL contains a very helpful example which involves traversing through text 
 
 ### Zipping
 ```
-zip -r timezonify.zip . -x ".*" -x "__MACOSX" -x "example.html" -x "NOTES.md" -x ".gitignore" -x ".git" -x "*screenshots*"
+zip -r timezonify.zip . -x ".*" -x "__MACOSX" -x "example.html" -x "NOTES.md" -x ".gitignore" -x ".git" -x "*screenshots*" -x "lib/.*" -x "timezonify.zip" -x "timezonify-chrome.zip"
 ```
 This command zips up the package without including the junk files like _MACOSX and DS_STORE, as well as ignoring all the previously ignored files
 
@@ -35,3 +35,18 @@ Reference here: https://extensionworkshop.com/documentation/develop/debugging/#d
 3. Open popup
 4. Click on the icon that appears to the left of the settings
 5. Select timezonify.html to inspect
+
+### Removed Features
+1. Timezonify Button
+manifest.json content_scripts line
+```
+"content_scripts": [
+    {
+        "matches": ["*://*/*"],
+        "js": [
+            "browser-polyfill.js",
+            "content_scripts/timezonify.js"
+        ]
+    }
+],
+```

@@ -17,11 +17,17 @@ async function getStorageValue(key){
 
 async function importScripts(){ // so far only imports 1 script: utils.js (helps out with code reusability)
   return new Promise((resolve) => {
-    import(browser.runtime.getURL("utils/utils.js"))
+
+    import("../utils/utils.js")
     .then((module) => {
-      utils = module;
-      resolve()
+        utils = module;
+        resolve()
     })
+    // import(browser.runtime.getURL("utils/utils.js"))
+    // .then((module) => {
+    //   utils = module;
+    //   resolve()
+    // })
   })
 }
 

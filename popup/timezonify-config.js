@@ -56,7 +56,7 @@ async function updateTimezonifyButton(){
     utils.getState()
     .then((state) => {
         if(state) {
-            toggleTimezonifyButtonDisplay(state.oldHtml != null, state.oldHtml)
+            // toggleTimezonifyButtonDisplay(state.oldHtml != null, state.oldHtml)
         }
     })
 
@@ -338,14 +338,13 @@ function updateFormValues(){
             //     toTimeInput.val(formattedTime)
             // }
             
-            // if(toTimezoneSelect.val()){ // Updates to-time-input and to-date if there is a to-timezone value saved in state
-            //     console.log("frmotimeinput.val", fromTimeInput.val())
-            //     const formattedTime = getFormattedTimeFromInput(fromTimeInput)
-            //     const [toTime, toDate] = convertTime(formattedTime, fromTimezoneSelect.val(), toTimezoneSelect.val(), true)
-            //     toTimeInput.val(toTime)
-            //     $("#to-date").text(toDate)
-            //     // updateOppositeDatetimeValues(toTimeInput, toTime)
-            // }
+            if(toTimezoneSelect.val()){ // Updates to-time-input and to-date if there is a to-timezone value saved in state
+                const formattedTime = getFormattedTimeFromInput(fromTimeInput)
+                const [toTime, toDate] = convertTime(formattedTime, fromTimezoneSelect.val(), toTimezoneSelect.val(), true)
+                toTimeInput.val(toTime)
+                $("#to-date").text(toDate)
+                // updateOppositeDatetimeValues(toTimeInput, toTime)
+            }
 
             
         } 
