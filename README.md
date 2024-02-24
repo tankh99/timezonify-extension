@@ -1,6 +1,7 @@
 # timezonify-extension
 Makes all timings local. Simply click on the Timezonify button after opening the extension popup and Voila.
 
+Get here on [Chrome Web Store](https://chromewebstore.google.com/detail/timezonify/blaebhbhlcdbeiepibjlnpcphmcokjpo) and [Mozilla Developer Hub](https://addons.mozilla.org/en-GB/firefox/addon/timezonify/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search)
 
 # Version History:
 
